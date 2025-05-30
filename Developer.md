@@ -132,6 +132,16 @@ openstack image create --progress --disk-format qcow2 --file AlmaLinux-9-Generic
 openstack image show AlmaLinux-9-GenericCloud-Base
 ```
 
+### AlmaLinux 10 clean image
+
+Run from a base AlmaLinux image and use `head_image = "AlmaLinux-10-GenericCloud-Base" and head_user=almalinux` in `local.tf`
+```bash
+openstack image delete AlmaLinux-10-GenericCloud-Base
+wget -c https://repo.almalinux.org/almalinux/10/cloud/x86_64/images/AlmaLinux-10-GenericCloud-latest.x86_64.qcow2
+openstack image create --progress --disk-format qcow2 --file AlmaLinux-10-GenericCloud-latest.x86_64.qcow2 --property hw_firmware_type='uefi' --property hw_scsi_model='virtio-scsi' --property hw_machine_type=q35 AlmaLinux-10-GenericCloud-Base
+openstack image show AlmaLinux-10-GenericCloud-Base
+```
+
 ### OBS
 
 OBS binary builds

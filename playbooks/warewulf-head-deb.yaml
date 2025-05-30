@@ -1,0 +1,47 @@
+- name: Configure Warewulf Head Node
+  hosts: head
+  become: true
+  tasks:
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - git
+          - curl
+          - jq
+          - bash-completion
+
+    - name: Install cluster packages
+      ansible.builtin.apt:
+        name:
+          - chrony
+          - isc-dhcp-server
+          - tftpd-hpa
+          - ipxe
+          - nfs-kernel-server
+          - slurmd
+          - slurmctld
+          - openmpi-bin
+
+    - name: Install Warewulf build dependencies
+      ansible.builtin.apt:
+        name:
+          - unzip
+          - golang
+      when:
+        - warewulf_build
+
+    - name: Add head localnet to chrony
+      ansible.builtin.lineinfile:
+        path: "{{ '/etc/chrony/chrony.conf' }}"
+        line: "allow 10.5.0.0/16"
+      register: chrony_conf
+
+    - name: Restart chrony
+      # noqa: no-handler
+      ansible.builtin.systemd_service:
+        name: chronyd.service
+        enabled: true
+        state: restarted
+      when: chrony_conf.changed

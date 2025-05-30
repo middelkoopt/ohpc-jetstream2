@@ -6,7 +6,8 @@
     - name: Upgrade all packages
       ansible.builtin.dnf:
         name: '*'
-        state: latest # noqa package-latest
+        state: latest
+        update_only: true
 
     - name: Prep base systems
       ansible.builtin.dnf:

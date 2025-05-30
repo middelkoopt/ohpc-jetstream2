@@ -10,9 +10,10 @@ while ! ssh $OHPC_USER@$OHPC_HEAD hostname ; do echo . ; sleep .2 ; done
 
 ansible --verbose all -m ping
 
-ansible-playbook -v playbooks/system-rocky.yaml
+ansible-playbook -v playbooks/system-el.yaml
+ansible-playbook -v playbooks/warewulf-head-el9.yaml
 ansible-playbook -v playbooks/warewulf-head.yaml
-ansible-playbook -v playbooks/image-rocky.yaml
+ansible-playbook -v playbooks/image-el9.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
 echo $OHPC_USER@$OHPC_HEAD

@@ -1,0 +1,63 @@
+- name: Configure Warewulf Head Node
+  hosts: head
+  become: true
+  tasks:
+
+    - name: Enable CRB
+      community.general.dnf_config_manager:
+        name: crb
+        state: enabled
+
+    - name: Enable EPEL
+      ansible.builtin.dnf:
+        allowerasing: true
+        name:
+          - epel-release
+
+    - name: Refresh metadata
+      ansible.builtin.dnf:
+        update_cache: true
+
+    - name: Install base packages
+      ansible.builtin.dnf:
+        allowerasing: true
+        name:
+          - ca-certificates
+          - git
+          - curl
+          - jq
+          - bash-completion
+          # - initscripts-service # AlmaLinux
+
+    - name: Install packages
+      ansible.builtin.dnf:
+        name:
+          - chrony
+          # - dhcp-server
+          # - tftp-server
+          - ipxe-bootimgs-x86
+          - ipxe-bootimgs-aarch64
+          # - slurm-slurmd
+          # - slurm-slurmctld
+
+    - name: Install Warewulf build dependencies
+      ansible.builtin.dnf:
+        name:
+          - unzip
+          - golang
+      when:
+        - warewulf_build
+
+    - name: Add head localnet to chrony
+      ansible.builtin.lineinfile:
+        path: "{{ '/etc/chrony.conf' }}"
+        line: "allow 10.5.0.0/16"
+      register: chrony_conf
+
+    - name: Restart chrony
+      # noqa: no-handler
+      ansible.builtin.systemd_service:
+        name: chronyd.service
+        enabled: true
+        state: restarted
+      when: chrony_conf.changed
