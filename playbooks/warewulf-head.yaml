@@ -112,7 +112,7 @@
         rm -rf /usr/src/warewulf
         git clone --no-checkout https://github.com/${WWACCOUNT}/warewulf.git /usr/src/warewulf
         cd /usr/src/warewulf
-        git checkout -B ${WWVERSION} origin/${WWVERSION}
+        git checkout -B v${WWVERSION} refs/tags/v${WWVERSION}
 
         ## Build Warewulf
         make clean
