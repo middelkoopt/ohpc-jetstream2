@@ -14,9 +14,26 @@
         name:
           - epel-release
 
-    - name: Refresh metadata
+    - name: Update EPEL
       ansible.builtin.dnf:
-        update_cache: true
+        name:
+          - epel-release
+        state: latest
+        update_only: true
+
+    - name: Add Fedora 40 updates for yq (disabled)
+      ansible.builtin.yum_repository:
+        name: fedora-updates-40
+        description: Fedora 40
+        baseurl: https://download.fedoraproject.org/pub/fedora/linux/updates/40/Everything/$basearch/
+        enabled: false
+        gpgcheck: false
+
+    - name: Install yq from Fedora 40 repository
+      ansible.builtin.dnf:
+        name: yq
+        state: present
+        enablerepo: fedora-updates-40
 
     - name: Install base packages
       ansible.builtin.dnf:
