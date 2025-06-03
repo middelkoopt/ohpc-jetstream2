@@ -109,10 +109,6 @@ resource "openstack_networking_port_v2" "ohpc-external" {
       subnet_id = openstack_networking_subnet_v2.ohpc-external-ipv4.id
       ip_address = cidrhost(openstack_networking_subnet_v2.ohpc-external-ipv4.cidr, 8)
   }
-  # fixed_ip {
-  #     subnet_id = openstack_networking_subnet_v2.ohpc-external-ipv6.id
-  #     ip_address = cidrhost(openstack_networking_subnet_v2.ohpc-external-ipv6.cidr, 8)
-  # }
 }
 
 resource "openstack_networking_port_v2" "ohpc-internal" {

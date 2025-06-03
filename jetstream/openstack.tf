@@ -126,6 +126,7 @@ resource "openstack_networking_secgroup_rule_v2" "ohpc-internal-ipv4-subnet" {
   remote_ip_prefix  = openstack_networking_subnet_v2.ohpc-internal-ipv4.cidr
 }
 
+# testing/open ipv4
 # resource "openstack_networking_secgroup_rule_v2" "ohpc-external-ipv4-ingress" {
 #   security_group_id = openstack_networking_secgroup_v2.ohpc-external.id
 #   direction         = "ingress"
@@ -133,6 +134,7 @@ resource "openstack_networking_secgroup_rule_v2" "ohpc-internal-ipv4-subnet" {
 #   remote_ip_prefix  = "0.0.0.0/0"
 # }
 
+# testing/open ipv6
 # resource "openstack_networking_secgroup_rule_v2" "ohpc-external-ipv6-ingress" {
 #   security_group_id = openstack_networking_secgroup_v2.ohpc-external.id
 #   direction         = "ingress"
@@ -243,11 +245,17 @@ resource "local_file" "ansible" {
   content = <<-EOF
     ## auto-generated
     [ohpc]
-    head ansible_host=${local.ohpc_dns} ansible_user=${var.head_user} arch=x86_64
+    head ansible_host=${local.ohpc_head} ansible_user=${var.head_user} arch=x86_64
 
     [ohpc:vars]
     sshkey=${var.ssh_public_key}
     EOF
+}
+
+## Locals Alias/Config
+
+locals {
+  ohpc_head = local.ohpc_dns
 }
 
 ## Output
@@ -269,7 +277,7 @@ output "ohpc_head_dns" {
 }
 
 output "ohpc_head" {
-  value = local.ohpc_dns
+  value = local.ohpc_head
 }
 
 output "ohpc_user" {
