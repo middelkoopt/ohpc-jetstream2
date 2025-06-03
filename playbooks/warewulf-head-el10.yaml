@@ -50,12 +50,10 @@
       ansible.builtin.dnf:
         name:
           - chrony
-          # - dhcp-server
-          # - tftp-server
+          - dnsmasq
+          - openssh
           - ipxe-bootimgs-x86
           - ipxe-bootimgs-aarch64
-          # - slurm-slurmd
-          # - slurm-slurmctld
 
     - name: Install Warewulf build dependencies
       ansible.builtin.dnf:
@@ -78,3 +76,101 @@
         enabled: true
         state: restarted
       when: chrony_conf.changed
+
+- name: Install Warewulf
+  hosts: head
+  become: true
+  tasks:
+
+    - name: Install Warewulf from package
+      ansible.builtin.dnf:
+        name:
+          - "https://github.com/{{ warewulf_rpm_account }}/warewulf/releases/download/\
+            {{ 'nightly' if warewulf_rpm_nightly else 'v' + warewulf_rpm_version }}/\
+            warewulf-{{ warewulf_rpm_version }}-1.el9.{{ arch }}.rpm"
+        disable_gpg_check: true
+      when:
+        - ansible_pkg_mgr == "dnf"
+        - not warewulf_build
+
+    - name: Build Warewulf from source
+      # noqa: command-instead-of-module
+      environment:
+        WWVERSION: "{{ warewulf_rpm_version }}"
+        WWACCOUNT: "{{ warewulf_rpm_account }}"
+      ansible.builtin.shell: |-
+        set -e -x
+
+        ## Config
+        : ${WWVERSION:=main}
+        : ${WWACCOUNT:=warewulf}
+
+        ## Clone Warewulf
+        rm -rf /usr/src/warewulf
+        git clone --no-checkout https://github.com/${WWACCOUNT}/warewulf.git /usr/src/warewulf
+        cd /usr/src/warewulf
+        git checkout -B v${WWVERSION} refs/tags/v${WWVERSION}
+
+        ## Build Warewulf
+        make clean
+        make config \
+          PREFIX=/usr \
+          SYSCONFDIR=/etc \
+          LOCALSTATEDIR=/var/lib \
+          SHAREDSTATEDIR=/var/lib \
+          TFTPDIR=/var/lib/tftpboot
+        make build
+        make install
+        wwctl completion bash > /etc/bash_completion.d/wwctl
+
+      args:
+        creates: /usr/bin/wwctl
+      when:
+        - warewulf_build
+
+    - name: Setup the head node
+      # noqa: command-instead-of-module
+      ansible.builtin.shell: |-
+        set -e -x
+
+        ## Config
+        sms_name=$(hostname)
+        sms_ip=10.5.0.8
+        internal_network=10.5.0.0
+        internal_netmask=255.255.0.0
+        ipv4_gateway=10.5.0.1
+        dns_servers=8.8.8.8
+        dhcp_start=10.5.1.1
+        dhcp_end=10.5.1.254
+
+        ## Configure warewulf.conf
+        sed -i "s/^ipaddr:.*/ipaddr: ${sms_ip}/" /etc/warewulf/warewulf.conf
+        sed -i "s/^netmask:.*/netmask: ${internal_netmask}/" /etc/warewulf/warewulf.conf
+        sed -i "s/^network:.*/network: ${internal_network}/" /etc/warewulf/warewulf.conf
+        sed -i "s/template: default/template: static/" /etc/warewulf/warewulf.conf
+        sed -i "s/range start:.*/range start: ${dhcp_start}/" /etc/warewulf/warewulf.conf
+        sed -i "s/range end:.*/range end: ${dhcp_end}/" /etc/warewulf/warewulf.conf
+        yq -i '.tftp["systemd name"]="dnsmasq"' /etc/warewulf/warewulf.conf
+        yq -i '.dhcp["systemd name"]="dnsmasq"' /etc/warewulf/warewulf.conf
+
+        ## Configure nodes.conf
+        sed -i "/- quiet/d" /etc/warewulf/nodes.conf
+
+        ## Configure profiles and overlays
+        wwctl profile delete --yes nodes || /bin/true
+        wwctl profile add nodes --profile=default --comment="Nodes profile"
+
+        ## Start Warewulf
+        systemctl enable --now warewulfd
+        wwctl configure --all
+        bash /etc/profile.d/ssh_setup.sh # configure ssh
+        systemctl status warewulfd
+
+        ## Configure warewulf nodes profile for network
+        wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
+
+        ## Create a test user
+        useradd --create-home --shell=/bin/bash --user-group test
+
+      args:
+        creates: /home/test
