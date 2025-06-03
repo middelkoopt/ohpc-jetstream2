@@ -14,10 +14,6 @@
         name:
           - epel-release
 
-    - name: Refresh metadata
-      ansible.builtin.dnf:
-        update_cache: true
-
     - name: Install base packages
       ansible.builtin.dnf:
         allowerasing: true
