@@ -1,0 +1,90 @@
+- name: Build Node Image
+  hosts: head
+  become: true
+  tasks:
+    - name: Generate compute node image
+      environment:
+        container: "{{ warewulf_container }}"
+      args:
+        creates: /var/lib/warewulf/provision/images/nodeimage.img.gz
+      register: image_result
+      ansible.builtin.shell: |-
+        set -e -x
+
+        ## Config
+        sms_ip=10.5.0.8
+        : ${container:=docker://ghcr.io/warewulf/warewulf-rockylinux:9}
+
+        ## Remove old image
+        wwctl profile set nodes --yes --image=UNDEF || /bin/true
+        wwctl image delete nodeimage --yes || /bin/true
+
+        ## Import node image from container
+        wwctl image import $container nodeimage --syncuser
+
+        ## Configure profile
+        wwctl profile set --yes nodes --image=nodeimage
+        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0'
+        wwctl profile set --yes nodes --netname=default --netdev=eth0
+
+        ## Configure image
+        wwctl image exec nodeimage /bin/bash << EXEC
+        # --------------------------------------------------------------------
+        set -e -x
+        set -o pipefail
+        export LANG=C.UTF-8
+
+        ## Setup base OS
+        dnf install -y dnf-plugins-core
+        dnf config-manager --set-enabled crb
+        dnf install -y epel-release
+        dnf install -y --allowerasing python3 ca-certificates procps wget curl unzip jq passwd
+
+        ## Update Image
+        dnf upgrade -y
+
+        ## Remove old kernels
+        dnf repoquery --installonly --latest-limit=-1 -q | xargs dnf remove -y
+
+        ## Debug
+        passwd -d root # allow serial console login
+
+        ## Install compute node packages
+        dnf install -y slurm-slurmd munge chrony
+
+        ## Enable services
+        systemctl enable munge
+        systemctl enable slurmd
+
+        ## Configure node
+        echo "server ${sms_ip} iburst" >> /etc/chrony.conf
+        echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
+
+        ## Extras
+        dnf install -y Lmod
+
+        ## Cleanup
+        rm -vf /var/lib/warewulf/chroots/rocky-9/rootfs/boot/initramfs-*.img
+        dnf clean all
+
+        # --------------------------------------------------------------------
+        EXEC
+
+    - name: Configure Dracut
+      when:
+        - warewulf_dracut
+        - image_result is changed
+      environment:
+        dracut:
+          "https://github.com/{{ warewulf_rpm_account }}/warewulf/releases/download/\
+          {{ 'nightly' if warewulf_rpm_nightly else 'v' + warewulf_rpm_version }}/\
+          warewulf-dracut-{{ warewulf_rpm_version }}-1.el9.noarch.rpm"
+      args:
+        creates: /var/lib/warewulf/chroots/rocky-9/rootfs/boot/initramfs-*.img
+      ansible.builtin.shell: |-
+        set -e -x
+
+        wwctl profile set --yes nodes --tagdel IPXEMenuEntry
+        wwctl image exec nodeimage --build=false -- /usr/bin/dnf install -y ${dracut}
+        wwctl image exec nodeimage -- /usr/bin/dracut --force --no-hostonly --add wwinit --regenerate-all
+        wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut
