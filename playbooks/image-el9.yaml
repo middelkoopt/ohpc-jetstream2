@@ -64,7 +64,7 @@
         dnf install -y Lmod
 
         ## Cleanup
-        rm -vf /var/lib/warewulf/chroots/rocky-9/rootfs/boot/initramfs-*.img
+        rm -vf /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
         dnf clean all
 
         # --------------------------------------------------------------------
@@ -80,7 +80,7 @@
           {{ 'nightly' if warewulf_rpm_nightly else 'v' + warewulf_rpm_version }}/\
           warewulf-dracut-{{ warewulf_rpm_version }}-1.el9.noarch.rpm"
       args:
-        creates: /var/lib/warewulf/chroots/rocky-9/rootfs/boot/initramfs-*.img
+        creates: /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
       ansible.builtin.shell: |-
         set -e -x
 
