@@ -13,7 +13,7 @@
 
         ## Config
         sms_ip=10.5.0.8
-        : ${container:=docker://ghcr.io/warewulf/warewulf-rockylinux:9}
+        : ${container:=docker://docker.io/library/almalinux:10}
 
         ## Remove old image
         wwctl profile set nodes --yes --image=UNDEF || /bin/true
@@ -33,6 +33,41 @@
         set -e -x
         set -o pipefail
         export LANG=C.UTF-8
+
+        ## Prep node image (warewulf-node-images)
+        dnf update -y
+        dnf install -y --allowerasing \
+          coreutils \
+          cpio \
+          dhclient \
+          e2fsprogs \
+          ethtool \
+          findutils \
+          initscripts \
+          ipmitool \
+          iproute \
+          kernel-core \
+          kernel-modules \
+          net-tools \
+          NetworkManager \
+          nfs-utils \
+          openssh-clients \
+          openssh-server \
+          pciutils \
+          psmisc \
+          rsync \
+          rsyslog \
+          strace \
+          wget \
+          which \
+          words
+        dnf remove -y selinux-policy
+        dnf clean all
+
+        chmod u+w / # https://github.com/openhpc/ohpc/issues/2061
+        userdel systemd-oom # remove unused dynamic system user
+
+        mkdir /etc/warewulf && echo /boot/ > /etc/warewulf/excludes
 
         ## Setup base OS
         dnf install -y dnf-plugins-core
