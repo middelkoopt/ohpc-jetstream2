@@ -4,7 +4,7 @@ Ongoing developer notes.
 WARNING: Some of this may be out of date, missing things, or flat out wrong!
 Don't forget to delete your lease when you are done.
 
-## Debug
+## Openstack Debug
 
 ```bash
 openstack console log show c1
@@ -16,6 +16,13 @@ Connect to the serial port directly (second is a full console, including ctl-c).
 ```bash
 websocat -b $(openstack console url show -f json --serial c1 | jq -r .url)
 (stty raw ; websocat -b $(openstack console url show -f json --serial c1 | jq -r .url) ; stty sane)
+```
+
+## Warewulf Debug
+
+```bash
+wwctl node create debug
+wwctl overlay cat --render=debug debug /tstruct.md.ww
 ```
 
 ## Chameleon
@@ -343,12 +350,3 @@ wwctl image delete nodeimage --yes
 
 ## Debug Notes
 
-Random notes during debugging
-
-```bash
-nmcli c modify System\ eth0 ipv4.method shared
-nmcli c up System\ eth0
-
-systemctl list-dependencies remote-fs.target
-systemctl list-dependencies remote-fs-pre.target
-```

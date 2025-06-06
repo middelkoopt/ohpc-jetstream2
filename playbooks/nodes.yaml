@@ -26,9 +26,9 @@
           wwctl overlay build
           wwctl configure --all
 
-          ## Nodes show up in /etc/hosts after `wwctl configure --all`
-          scontrol reconfigure
-          sinfo
+          # ## Nodes show up in /etc/hosts after `wwctl configure --all`
+          # scontrol reconfigure
+          # sinfo
 
           touch /root/add-nodes.stamp
 

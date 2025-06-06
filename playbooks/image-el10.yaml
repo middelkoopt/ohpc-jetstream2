@@ -39,7 +39,6 @@
         dnf install -y --allowerasing \
           coreutils \
           cpio \
-          dhclient \
           e2fsprogs \
           ethtool \
           findutils \
@@ -85,11 +84,7 @@
         passwd -d root # allow serial console login
 
         ## Install compute node packages
-        dnf install -y slurm-slurmd munge chrony
-
-        ## Enable services
-        systemctl enable munge
-        systemctl enable slurmd
+        dnf install -y chrony
 
         ## Configure node
         echo "server ${sms_ip} iburst" >> /etc/chrony.conf
@@ -99,7 +94,7 @@
         dnf install -y Lmod
 
         ## Cleanup
-        rm -vf /var/lib/warewulf/chroots/rocky-9/rootfs/boot/initramfs-*.img
+        rm -vf /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
         dnf clean all
 
         # --------------------------------------------------------------------

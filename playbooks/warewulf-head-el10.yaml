@@ -44,14 +44,15 @@
           - curl
           - jq
           - bash-completion
-          # - initscripts-service # AlmaLinux
+          - initscripts-service # AlmaLinux
 
     - name: Install packages
       ansible.builtin.dnf:
         name:
+          - openssh
           - chrony
           - dnsmasq
-          - openssh
+          - policycoreutils-python-utils
           - ipxe-bootimgs-x86
           - ipxe-bootimgs-aarch64
 
@@ -130,6 +131,7 @@
 
     - name: Setup the head node
       # noqa: command-instead-of-module
+      # noqa: risky-shell-pipe # false positive, no pipes used
       ansible.builtin.shell: |-
         set -e -x
 
@@ -142,23 +144,34 @@
         dns_servers=8.8.8.8
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
+        sms_eth_internal=eth1
 
         ## Configure warewulf.conf
-        sed -i "s/^ipaddr:.*/ipaddr: ${sms_ip}/" /etc/warewulf/warewulf.conf
-        sed -i "s/^netmask:.*/netmask: ${internal_netmask}/" /etc/warewulf/warewulf.conf
-        sed -i "s/^network:.*/network: ${internal_network}/" /etc/warewulf/warewulf.conf
-        sed -i "s/template: default/template: static/" /etc/warewulf/warewulf.conf
-        sed -i "s/range start:.*/range start: ${dhcp_start}/" /etc/warewulf/warewulf.conf
-        sed -i "s/range end:.*/range end: ${dhcp_end}/" /etc/warewulf/warewulf.conf
-        yq -i '.tftp["systemd name"]="dnsmasq"' /etc/warewulf/warewulf.conf
-        yq -i '.dhcp["systemd name"]="dnsmasq"' /etc/warewulf/warewulf.conf
+        yq -i /etc/warewulf/warewulf.conf --from-file /dev/stdin <<EOF
+          .ipaddr = "${sms_ip}" |
+          .netmask = "${internal_netmask}" |
+          .network = "${internal_network}" |
+          .dhcp["template"] = "static" |
+          .dhcp["range start"] = "${dhcp_start}" |
+          .dhcp["range end"] = "${dhcp_end}" |
+          .dhcp["systemd name"] = "dnsmasq" |
+          .tftp["systemd name"] = "dnsmasq" |
+          .ssh["key types"] -= ["dsa"]
+        EOF
 
-        ## Configure nodes.conf
-        sed -i "/- quiet/d" /etc/warewulf/nodes.conf
+        ## Configure nodes.conf)
+        yq -i /etc/warewulf/nodes.conf --from-file /dev/stdin <<EOF
+          .nodeprofiles.default.kernel.args -= ["quiet"]
+        EOF
 
         ## Configure profiles and overlays
         wwctl profile delete --yes nodes || /bin/true
         wwctl profile add nodes --profile=default --comment="Nodes profile"
+
+        ## Configure dnsmasq
+        echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
+        semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
+        restorecon -R -v /var/lib/tftpboot
 
         ## Start Warewulf
         systemctl enable --now warewulfd
