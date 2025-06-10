@@ -170,14 +170,16 @@
 
         ## Configure dnsmasq
         echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
-        semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
-        restorecon -R -v /var/lib/tftpboot
 
         ## Start Warewulf
         systemctl enable --now warewulfd
         wwctl configure --all
         bash /etc/profile.d/ssh_setup.sh # configure ssh
         systemctl status warewulfd
+
+        ## FIXME: fix selinux attributes for /var/lib/tftpboot
+        semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
+        restorecon -R -v /var/lib/tftpboot
 
         ## Configure warewulf nodes profile for network
         wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
