@@ -11,3 +11,4 @@ local*.ini
 /.ipynb_checkpoints/
 boot.log
 Untitiled*
+*.qcow2
