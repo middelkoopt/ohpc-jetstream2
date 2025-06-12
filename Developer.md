@@ -119,34 +119,26 @@ colima ssh -- sudo apt install --yes make gawk latexmk texlive-latex-recommended
 colima ssh make
 ```
 
-### Rocky 9 clean image
+### Rocky clean image
 
-Run from a base Rocky image and use `head_image = "Rocky-9-GenericCloud-Base"` in `local.tf`
+Run from a base Rocky image and use `head_image = "Rocky-$VERSION-GenericCloud-Base"` in `local.tf`
 ```bash
-openstack image delete Rocky-9-GenericCloud-Base
-wget -c https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2
-openstack image create --progress --disk-format qcow2 --file Rocky-9-GenericCloud-Base.latest.x86_64.qcow2 --property hw_firmware_type='uefi' --property hw_scsi_model='virtio-scsi' --property hw_machine_type=q35 Rocky-9-GenericCloud-Base
-openstack image show Rocky-9-GenericCloud-Base
+VERSION=10
+openstack image delete Rocky-${VERSION}-GenericCloud-Base
+wget -c https://dl.rockylinux.org/pub/rocky/${VERSION}/images/x86_64/Rocky-${VERSION}-GenericCloud-Base.latest.x86_64.qcow2
+openstack image create --progress --disk-format qcow2 --file Rocky-${VERSION}-GenericCloud-Base.latest.x86_64.qcow2 --property hw_firmware_type='uefi' --property hw_scsi_model='virtio-scsi' --property hw_machine_type=q35 Rocky-${VERSION}-GenericCloud-Base
+openstack image show Rocky-${VERSION}-GenericCloud-Base
 ```
 
-### AlmaLinux 9 clean image
+### AlmaLinux clean image
 
-Run from a base AlmaLinux image and use `head_image = "AlmaLinux-9-GenericCloud-Base" and head_user=almalinux` in `local.tf`
+Run from a base AlmaLinux image and use `head_image = "AlmaLinux-$VERSION-GenericCloud-Base" and head_user=almalinux` in `local.tf`
 ```bash
-openstack image delete AlmaLinux-9-GenericCloud-Base
-wget -c https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
-openstack image create --progress --disk-format qcow2 --file AlmaLinux-9-GenericCloud-latest.x86_64.qcow2 --property hw_firmware_type='uefi' --property hw_scsi_model='virtio-scsi' --property hw_machine_type=q35 AlmaLinux-9-GenericCloud-Base
-openstack image show AlmaLinux-9-GenericCloud-Base
-```
-
-### AlmaLinux 10 clean image
-
-Run from a base AlmaLinux image and use `head_image = "AlmaLinux-10-GenericCloud-Base" and head_user=almalinux` in `local.tf`
-```bash
-openstack image delete AlmaLinux-10-GenericCloud-Base
-wget -c https://repo.almalinux.org/almalinux/10/cloud/x86_64/images/AlmaLinux-10-GenericCloud-latest.x86_64.qcow2
-openstack image create --progress --disk-format qcow2 --file AlmaLinux-10-GenericCloud-latest.x86_64.qcow2 --property hw_firmware_type='uefi' --property hw_scsi_model='virtio-scsi' --property hw_machine_type=q35 AlmaLinux-10-GenericCloud-Base
-openstack image show AlmaLinux-10-GenericCloud-Base
+VERSION=10
+openstack image delete AlmaLinux-${VERSION}-GenericCloud-Base
+wget -c https://repo.almalinux.org/almalinux/${VERSION}/cloud/x86_64/images/AlmaLinux-${VERSION}-GenericCloud-latest.x86_64.qcow2
+openstack image create --progress --disk-format qcow2 --file AlmaLinux-${VERSION}-GenericCloud-latest.x86_64.qcow2 --property hw_firmware_type='uefi' --property hw_scsi_model='virtio-scsi' --property hw_machine_type=q35 AlmaLinux-${VERSION}-GenericCloud-Base
+openstack image show AlmaLinux-${VERSION}-GenericCloud-Base
 ```
 
 ### OBS
