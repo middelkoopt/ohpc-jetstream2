@@ -1,0 +1,39 @@
+FROM registry.docker.com/rockylinux/rockylinux:10
+
+## Update and setup rocky
+RUN dnf update -y && \
+    dnf install -y dnf-utils epel-release && \
+    dnf config-manager --set-enabled crb && \
+    dnf update -y
+
+## Install system
+RUN dnf install -y systemd cloud-init && \
+    dnf install -y ca-certificates procps zstd jq && \
+    dnf install -y initscripts-service cpio pigz && \
+    dnf install -y openssh openssh-clients openssh-server iproute iputils NetworkManager chrony && \
+    dnf install -y sudo nano vim less bash-completion man
+
+## Install kernel
+RUN install -vdp /etc/dracut.conf.d/ && \
+    echo 'add_drivers+=" virtio_blk virtio_net "' > /etc/dracut.conf.d/90-virt.conf && \
+    echo 'hostonly="no"' >> /etc/dracut.conf.d/90-virt.conf && \
+    dnf install -y --setopt=install_weak_deps=False kernel-uki-virt kernel shim-x64.x86_64 grub2-efi
+
+## Configure boot
+RUN echo 'set root=(hd0,gpt2); set prefix=($root)/boot/grub2; configfile $prefix/grub.cfg' \
+        > $(dirname /boot/efi/EFI/*/grubx64.efi)/grub.cfg && \
+    echo "echo loading..." > /boot/grub2/grub.cfg && \
+    echo "linux" /boot/vmlinuz-* "console=ttyS0 root=PARTLABEL=root" > /boot/grub2/grub.cfg && \
+    echo "initrd" /boot/initramfs-* >> /boot/grub2/grub.cfg && \
+    echo "boot" >> /boot/grub2/grub.cfg && \
+    echo "PARTLABEL=root / ext4 defaults 0 1" > /etc/fstab && \
+    echo "PARTLABEL=EFI /boot/efi vfat defaults,umask=0077,shortname=winnt 0 0" >> /etc/fstab
+
+## Configure system
+RUN systemctl enable sshd.service && \
+    cp -v /dev/null /etc/machine-id && \
+    rm -v /.profile
+
+## Configure root
+RUN passwd -d root && \
+    sed -i '/alias/d' /root/.bashrc
