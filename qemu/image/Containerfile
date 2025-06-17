@@ -17,11 +17,12 @@ RUN dnf install -y systemd cloud-init && \
 RUN install -vdp /etc/dracut.conf.d/ && \
     echo 'add_drivers+=" virtio_blk virtio_net "' > /etc/dracut.conf.d/90-virt.conf && \
     echo 'hostonly="no"' >> /etc/dracut.conf.d/90-virt.conf && \
-    dnf install -y --setopt=install_weak_deps=False kernel-uki-virt kernel shim-x64.x86_64 grub2-efi
+    declare -A efi_arch=(["x86_64"]="x64.x86_64" ["aarch64"]="aa64.aarch64") && \
+    dnf install -y --setopt=install_weak_deps=False kernel grub2-efi shim-${efi_arch[$HOSTTYPE]}
 
 ## Configure boot
 RUN echo 'set root=(hd0,gpt2); set prefix=($root)/boot/grub2; configfile $prefix/grub.cfg' \
-        > $(dirname /boot/efi/EFI/*/grubx64.efi)/grub.cfg && \
+        > $(dirname /boot/efi/EFI/*/shim.efi)/grub.cfg && \
     echo "echo loading..." > /boot/grub2/grub.cfg && \
     echo "linux" /boot/vmlinuz-* "console=ttyS0 root=PARTLABEL=root" > /boot/grub2/grub.cfg && \
     echo "initrd" /boot/initramfs-* >> /boot/grub2/grub.cfg && \
