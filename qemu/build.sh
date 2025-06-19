@@ -7,6 +7,9 @@ NBD=/dev/nbd0
 
 echo "=== build.sh ${IMAGE} ${NBD}"
 
+echo "--- setup nbd"
+sudo modprobe nbd
+
 echo "--- cleanup failed builds"
 sudo umount -v ${NBD}p1 || /bin/true
 sudo umount -v ${NBD}p2 || /bin/true
@@ -19,7 +22,6 @@ echo "--- create disk"
 qemu-img create -f qcow2 drive.qcow2 ${SIZE}
 
 echo "--- nbd mount disk"
-sudo modprobe nbd
 sudo qemu-nbd --connect=${NBD} --format=qcow2 --discard=unmap --detect-zeroes=unmap drive.qcow2
 
 echo "--- create partitions"
@@ -55,24 +57,3 @@ sudo umount -v /mnt/${IMAGE}/boot/efi
 sudo umount -v /mnt/${IMAGE}
 sudo qemu-nbd --disconnect ${NBD}
 
-echo "--- generate key"
-if [ ! -r id_rsa.pub ] ; then
-    ssh-keygen -t rsa -b 2048 -N '' -C admin@${IMAGE} -f id_rsa
-fi
-
-echo "--- make cloud-init"
-install -vdp ./cloud-init
-echo "local-hostname: ${IMAGE}" > ./cloud-init/meta-data
-cat > ./cloud-init/user-data << EOF
-#cloud-config
-users:
-  - name: root
-    plain_text_passwd: ""
-    lock_passwd: false
-  - name: admin
-    groups: sudo
-    sudo: "ALL=(ALL) NOPASSWD:ALL"
-    ssh_authorized_keys:
-      - $(cat id_rsa.pub)
-EOF
-genisoimage -output seed.img -volid cidata -rational-rock -joliet -input-charset utf-8 cloud-init

@@ -1,5 +1,5 @@
-/drive.qcow2
-/cloud-init/
-/seed.img
-/id_rsa
-/id_rsa.pub
+*.qcow2
+cloud-init/
+seed.img
+id_rsa
+id_rsa.pub

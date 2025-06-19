@@ -1,0 +1,8 @@
+nestedVirtualization: true
+networks:
+  - vzNAT: true
+ssh:
+  localPort: 8022
+user:
+  name: admin
+  home: /home/admin

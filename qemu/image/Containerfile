@@ -8,7 +8,7 @@ RUN dnf update -y && \
 
 ## Install system
 RUN dnf install -y systemd cloud-init && \
-    dnf install -y ca-certificates procps zstd jq && \
+    dnf install -y ca-certificates procps zstd jq wget && \
     dnf install -y initscripts-service cpio pigz && \
     dnf install -y openssh openssh-clients openssh-server iproute iputils NetworkManager chrony && \
     dnf install -y sudo nano vim less bash-completion man
@@ -19,6 +19,11 @@ RUN install -vdp /etc/dracut.conf.d/ && \
     echo 'hostonly="no"' >> /etc/dracut.conf.d/90-virt.conf && \
     declare -A efi_arch=(["x86_64"]="x64.x86_64" ["aarch64"]="aa64.aarch64") && \
     dnf install -y --setopt=install_weak_deps=False kernel grub2-efi shim-${efi_arch[$HOSTTYPE]}
+
+## Preload image
+RUN install -vdp /data && \
+    VERSION=10 && \
+    wget -nv "https://dl.rockylinux.org/pub/rocky/${VERSION}/images/${HOSTTYPE}/Rocky-${VERSION}-GenericCloud-Base.latest.${HOSTTYPE}.qcow2" -O /data/head.qcow2
 
 ## Configure boot
 RUN echo 'set root=(hd0,gpt2); set prefix=($root)/boot/grub2; configfile $prefix/grub.cfg' \
@@ -38,3 +43,11 @@ RUN systemctl enable sshd.service && \
 ## Configure root
 RUN passwd -d root && \
     sed -i '/alias/d' /root/.bashrc
+
+## Application dependencies
+RUN dnf install -y qemu-kvm edk2-aarch64 wget xorriso
+
+## Application
+COPY systemd/ /etc/systemd/system/
+COPY data/ /data/
+RUN install -vdp /data
