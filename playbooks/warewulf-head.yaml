@@ -6,9 +6,8 @@
     - name: Install Warewulf from package
       ansible.builtin.dnf:
         name:
-          - "https://github.com/{{ warewulf_rpm_account }}/warewulf/releases/download/\
-            {{ 'nightly' if warewulf_rpm_nightly else 'v' + warewulf_rpm_version }}/\
-            warewulf-{{ warewulf_rpm_version }}-1.el9.{{ arch }}.rpm"
+          - "https://github.com/{{ warewulf_account }}/warewulf/releases/download/\
+            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el9.{{ arch }}.rpm"
         disable_gpg_check: true
       when:
         - ansible_pkg_mgr == "dnf"
@@ -17,20 +16,20 @@
     - name: Build Warewulf from source
       # noqa: command-instead-of-module
       environment:
-        WWVERSION: "{{ warewulf_rpm_version }}"
-        WWACCOUNT: "{{ warewulf_rpm_account }}"
+        WWACCOUNT: "{{ warewulf_account }}"
+        WWVERSION: "{{ warewulf_build_ref }}"
       ansible.builtin.shell: |-
         set -e -x
 
         ## Config
-        : ${WWVERSION:=main}
         : ${WWACCOUNT:=warewulf}
+        : ${WWVERSION:=main}
 
         ## Clone Warewulf
         rm -rf /usr/src/warewulf
         git clone --no-checkout https://github.com/${WWACCOUNT}/warewulf.git /usr/src/warewulf
         cd /usr/src/warewulf
-        git checkout -B v${WWVERSION} refs/tags/v${WWVERSION}
+        git checkout -B $(basename "${WWVERSION}") ${WWVERSION}
 
         ## Build Warewulf
         make clean
