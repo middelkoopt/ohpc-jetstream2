@@ -308,22 +308,48 @@ wwctl image exec $image --build=false -- /usr/bin/dnf install -y ignition /tmp/w
 wwctl image exec $image -- /usr/bin/dracut --force --no-hostonly --add wwinit --regenerate-all
 ```
 
-Disk Image
+Direct from source
 ```bash
+image=$(wwctl profile list nodes --json | jq -r '.nodes."image name"')
+chroot=$(wwctl image show $image)
+wwctl image exec --build=false $image -- /usr/bin/dnf install -y dracut-network dmidecode
+
+wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut
 wwctl node set --yes c1 \
   --diskname /dev/vda \
-  --partcreate --fswipe \
+  --partname EFI --partcreate --partnumber 1 --partsize=4096
+wwctl node set --yes c1 \
+  --diskname /dev/vda \
   --partname rootfs --partcreate --partnumber 2 \
-  --fsname rootfs --fsformat ext4 --fspath /rootfs
-wwctl node set --yes c1 --root persistent
+  --fsname rootfs --fswipe --fsformat ext4 --fspath /
+
+wwctl node set c1 --yes --root=/dev/disk/by-partlabel/rootfs
+wwctl overlay build
+
+rsync -av /usr/src/warewulf/dracut/modules.d/ $chroot/usr/lib/dracut/modules.d/ && \
+  wwctl image exec $image -- \
+    /usr/bin/dracut --verbose --force --no-hostonly --add wwinit --regenerate-all \
+    --install sfdisk --install blockdev --install udevadm --install mkfs --install mkfs.ext4  --install wipefs
+
 ```
+
+```
+            start_mib: "1"
+            size_mib: "2"
+            type_guid: "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+```
+
+Yq - https://rpmfind.net/linux/rpm2html/search.php?query=yq&submit=Search+...&system=fedora&arch=x86_64
 
 Debugging: `curl` some data
 ```bash
 mac=$(wwctl node list --json | jq -r '.c1."network devices".default.hwaddr')
 curl -4 localhost:9873/ipxe/${mac}
 curl -4 localhost:9873/overlay-file/debug/tstruct.md.ww?render=c1
-curl -4s localhost:9873/overlay-file/persistent/ignition.json.ww?render=c1 | jq
+curl -4 localhost:9873/overlay-file/sfdisk/warewulf/sfdisk/disks.ww?render=c1
+wwctl overlay cat --render=c1 sfdisk /warewulf/sfdisk/disks.ww
+wwctl overlay cat --render=c1 sfdisk /warewulf/wwinit.d/10-sfdisk.sh.ww
+wwctl overlay cat --render=c1 mkfs /warewulf/wwinit.d/20-mkfs.sh.ww
 ```
 
 Debug Notes

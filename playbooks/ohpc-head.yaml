@@ -209,7 +209,7 @@
 
         ## Set as default image and set kernel args
         wwctl profile set --yes nodes --image rocky-9
-        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0,crashkernel=no,vga=791'
+        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0,crashkernel=no,vga=791,rd.shell'
 
         touch /root/configure-node-image.stamp
 

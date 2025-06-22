@@ -24,7 +24,7 @@
 
         ## Configure profile
         wwctl profile set --yes nodes --image=nodeimage
-        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0'
+        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0,rd.shell'
         wwctl profile set --yes nodes --netname=default --netdev=eth0
 
         ## Configure image
@@ -64,7 +64,7 @@
         dnf install -y Lmod
 
         ## Cleanup
-        rm -vf /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
+        rm -vf /boot/initramfs-*.img
         dnf clean all
 
         # --------------------------------------------------------------------
@@ -73,18 +73,36 @@
     - name: Configure Dracut
       when:
         - warewulf_dracut
-        - image_result is changed
-      environment:
-        dracut:
-          "https://github.com/{{ warewulf_rpm_account }}/warewulf/releases/download/\
-          {{ 'nightly' if warewulf_rpm_nightly else 'v' + warewulf_rpm_version }}/\
-          warewulf-dracut-{{ warewulf_rpm_version }}-1.el9.noarch.rpm"
       args:
         creates: /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
       ansible.builtin.shell: |-
         set -e -x
 
-        wwctl profile set --yes nodes --tagdel IPXEMenuEntry
-        wwctl image exec nodeimage --build=false -- /usr/bin/dnf install -y ${dracut}
-        wwctl image exec nodeimage -- /usr/bin/dracut --force --no-hostonly --add wwinit --regenerate-all
+        ## Install yq
+        dnf install -y https://rpmfind.net/linux/fedora/linux/updates/39/Everything/x86_64/Packages/y/yq-4.43.1-2.fc39.x86_64.rpm
+
+        ## Config dracut boot
         wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut
+
+        wwctl node set --yes c1 \
+          --diskname /dev/vda \
+          --partname EFI --partcreate --partnumber 1 --partsize=4096
+        yq -i '.nodes.c1.disks./dev/vda.partitions.EFI.start_mib=1' /etc/warewulf/nodes.conf
+        yq -i '.nodes.c1.disks./dev/vda.partitions.EFI.size_mib=2' /etc/warewulf/nodes.conf
+        yq -i '.nodes.c1.disks./dev/vda.partitions.EFI.type_guid="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"' /etc/warewulf/nodes.conf
+
+        wwctl node set --yes c1 \
+          --diskname /dev/vda \
+          --partname rootfs --partcreate --partnumber 2 \
+          --fsname rootfs --fswipe --fsformat ext4 --fspath /
+        wwctl node set c1 --yes --root=/dev/disk/by-partlabel/rootfs
+
+        ## Create initramfs
+        wwctl image exec --build=false nodeimage -- /usr/bin/dnf install -y dracut-network dmidecode
+        cp -av /usr/src/warewulf/dracut/modules.d $(wwctl image show nodeimage)/usr/lib/dracut/
+
+        ## Build image and overlay
+        wwctl image exec nodeimage -- \
+          /usr/bin/dracut --verbose --force --no-hostonly --regenerate-all --add wwinit \
+          --install sfdisk --install blockdev --install udevadm --install mkfs --install mkfs.ext4  --install wipefs
+        wwctl overlay build
