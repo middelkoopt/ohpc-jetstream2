@@ -14,6 +14,6 @@ dnf install -y podman qemu-kvm edk2-aarch64
 
 build
 ```bash
-IMAGE=ohpc-qemu ./image/data/generate-seed.sh
+IMAGE=ohpc-qemu ./container/data/generate-seed.sh
 ./build.sh
 ```

@@ -16,7 +16,7 @@ sudo umount -v ${NBD}p2 || /bin/true
 sudo qemu-nbd --disconnect ${NBD}
 
 echo "--- build container"
-podman build --progress=plain -t ${IMAGE} ./image $*
+podman build --progress=plain -t ${IMAGE} ./container $*
 
 echo "--- create disk"
 qemu-img create -f qcow2 drive.qcow2 ${SIZE}
