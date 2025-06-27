@@ -367,4 +367,10 @@ wwctl image delete nodeimage --yes
 ```
 
 ## Debug Notes
+PXE
+```
+dh -p SimpleNetwork
+dh -p PxeBaseCode
+```
+
 

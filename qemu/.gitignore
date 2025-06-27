@@ -1,6 +1,7 @@
 /images/
 cloud-init/
 *.qcow2
-seed.img
+*.img
+*.fd
 id_rsa
 id_rsa.pub
