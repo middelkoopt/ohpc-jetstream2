@@ -78,26 +78,18 @@
       ansible.builtin.shell: |-
         set -e -x
 
-        ## Install yq (FIXME: need to find a better way to get yq)
-        dnf install -y https://rpmfind.net/linux/fedora/linux/updates/39/Everything/x86_64/Packages/y/yq-4.43.1-2.fc39.x86_64.rpm
-
         ## Config dracut boot
         wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut
 
-        wwctl node set --yes c1 \
+        wwctl profile set --yes nodes \
           --diskname /dev/vda \
-          --partname EFI --partcreate --partnumber 1 --partsize=4096
+          --partname EFI --partcreate --partnumber 1 --partsize=2 --parttype=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
 
-        ## FIXME: get these into `wwctl node set` command
-        yq -i '.nodes.c1.disks./dev/vda.partitions.EFI.start_mib=1' /etc/warewulf/nodes.conf
-        yq -i '.nodes.c1.disks./dev/vda.partitions.EFI.size_mib=2' /etc/warewulf/nodes.conf
-        yq -i '.nodes.c1.disks./dev/vda.partitions.EFI.type_guid="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"' /etc/warewulf/nodes.conf
-
-        wwctl node set --yes c1 \
+        wwctl profile set --yes nodes \
           --diskname /dev/vda \
           --partname rootfs --partcreate --partnumber 2 \
           --fsname rootfs --fswipe --fsformat ext4 --fspath /
-        wwctl node set c1 --yes --root=/dev/disk/by-partlabel/rootfs
+        wwctl profile set nodes --yes --root=/dev/disk/by-partlabel/rootfs
 
         ## Create initramfs
         wwctl image exec --build=false nodeimage -- /usr/bin/dnf install -y dracut-network dmidecode
