@@ -1,0 +1,35 @@
+## Local data
+
+resource "local_file" "ansible" {
+  filename = "local.ini"
+  content = <<-EOF
+    ## auto-generated
+    [ohpc]
+    head ansible_host=localhost ansible_port=8022 ansible_user=${var.head_user} arch=x86_64
+
+    [ohpc:vars]
+    sshkey=${var.ssh_public_key}
+    EOF
+}
+
+## Output
+
+output "ohpc_head_ipv4" {
+  value = "127.0.0.1"
+}
+
+output "ohpc_head_ipv6" {
+  value = "::1"
+}
+
+output "ohpc_head_dns" {
+  value = "localhost"
+}
+
+output "ohpc_head" {
+  value = "localhost"
+}
+
+output "ohpc_user" {
+  value = var.head_user
+}

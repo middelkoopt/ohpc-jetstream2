@@ -1,4 +1,3 @@
-username = "auser"
 ssh_public_key = "ssh-rsa ...= auser@machine"
 
 #head_image = "Featured-Minimal-Ubuntu24"

@@ -41,7 +41,7 @@ echo "--- start ${IMAGE_NAME}"
 $TMUX $QEMU -m ${IMAGE_RAM}G -smp ${IMAGE_CPUS} \
     -bios ./QEMU_EFI.fd \
     -drive if=virtio,file=${IMAGE_NAME}.qcow2,format=qcow2 \
-    -device virtio-net-pci,netdev=net0,mac=52:54:00:ff:01:${IMAGE_NAME} \
+    -device virtio-net-pci,netdev=net0,mac=52:54:00:05:01:${IMAGE_NAME} \
     -netdev dgram,id=net0,remote.type=inet,remote.host=224.0.0.1,remote.port=8001 \
     -boot order=n \
     -nographic

@@ -125,7 +125,7 @@
         wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
 
         ## Add new overlays to nodes profile
-        wwctl profile set -y nodes --wwinit=munge,sfdisk,mkfs
+        wwctl profile set --yes nodes --system-overlays=munge
 
         ## Start slurm
         systemctl enable --now munge

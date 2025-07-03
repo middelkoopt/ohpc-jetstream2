@@ -26,7 +26,14 @@ esac
 : ${OS:=$(uname -s)}
 case "$OS" in
     Linux)
-        QEMU_EFI="/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"
+        case "$ARCH" in
+            aarch64)
+                QEMU_EFI="/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"
+                ;;
+            x86_64)
+                QEMU_EFI="/usr/share/qemu/OVMF.fd"
+                ;;
+        esac
         QEMU_ACCEL="-accel kvm"
         ;;
     Darwin)
@@ -46,6 +53,6 @@ $TMUX $QEMU $QEMU_ACCEL -m ${IMAGE_RAM}G -smp ${IMAGE_CPUS} \
     -drive if=virtio,file=${IMAGE_NAME}.qcow2,format=qcow2 \
     -drive if=virtio,file=seed.img,format=raw,media=cdrom \
     -nic user,model=virtio-net-pci,hostfwd=tcp::8022-:22 \
-    -device virtio-net-pci,netdev=net1,mac=52:54:00:ff:00:01 \
+    -device virtio-net-pci,netdev=net1,mac=52:54:00:05:00:08 \
     -netdev dgram,id=net1,remote.type=inet,remote.host=224.0.0.1,remote.port=8001 \
     -nographic

@@ -21,4 +21,14 @@ users:
     ssh_authorized_keys:
       - $(cat ./id_rsa.pub)
 EOF
+cat > ./cloud-init/network-config << EOF
+#cloud-config
+network:
+  version: 2
+  ethernets:
+    eth1:
+      dhcp4: no
+      addresses:
+        - 10.5.0.8/16
+EOF
 mkisofs -output ./seed.img -volid cidata -rational-rock -joliet -input-charset utf-8 ./cloud-init
