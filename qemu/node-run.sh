@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export IMAGE_NAME=${1:-c1}
-export IMAGE_RAM=${2:-2}
+export IMAGE_RAM=${2:-3}
 export IMAGE_CPUS=${3:-1}
 
 echo "=== head-run.sh IMAGE_NAME=${IMAGE_NAME} IMAGE_RAM=${IMAGE_RAM} IMAGE_CPUS=${IMAGE_CPUS}"

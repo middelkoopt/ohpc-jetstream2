@@ -100,7 +100,4 @@
           /usr/bin/dracut --verbose --force --no-hostonly --regenerate-all --add wwinit \
           --install sfdisk --install blockdev --install udevadm --install mkfs --install mkfs.ext4  --install wipefs
         
-        ## FIXME: get munge from nodes
-        wwctl profile set --yes nodes --system-overlays=munge,sfdisk,mkfs
-
         wwctl overlay build
