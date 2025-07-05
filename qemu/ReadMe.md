@@ -1,6 +1,14 @@
 # QEMU Cluster
 
-## Build
+## Dependencies
+
+Debian
+```bash
+sudo apt-get install --yes qemu-system ansible mkisofs
+ansible-galaxy collection install community.general
+```
+
+## Standalone VM
 
 Debian/Ubuntu
 ```bash

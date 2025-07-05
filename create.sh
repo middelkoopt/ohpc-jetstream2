@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 
-echo "=== create.sh"
+echo "=== create.sh ${OS_NAME}"
+
+if [[ -z "${OS_NAME}" ]] ; then
+    echo "error: must set OS_NAME"
+    exit 1
+fi
 
 tofu -chdir=${OS_NAME} apply -auto-approve -var-file=local.tfvars
 
