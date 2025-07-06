@@ -16,6 +16,8 @@ cat > ./cloud-init/user-data << EOF
 #cloud-config
 users:
   - name: admin
+    plain_text_passwd: "admin"
+    lock_passwd: false
     groups: sudo
     sudo: "ALL=(ALL) NOPASSWD:ALL"
     ssh_authorized_keys:

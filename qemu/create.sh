@@ -4,10 +4,12 @@ set -e
 n=${1:-1}
 : ${SESSION:=ohpc}
 
-echo "=== create.sh n=${n}"
+echo "### create.sh n=${n}"
 
 echo '--- remove old ssh key'
 ssh-keygen -R "[localhost]:8022"
+
+./generate-seed.sh
 
 ./run-image.sh head 1 1
 
