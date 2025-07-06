@@ -12,3 +12,4 @@ local*.ini
 boot.log
 Untitiled*
 *.qcow2
+recipe.sh

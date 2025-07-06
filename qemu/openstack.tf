@@ -30,6 +30,10 @@ output "ohpc_head" {
   value = "localhost"
 }
 
+output "ohpc_port" {
+  value = "8022"
+}
+
 output "ohpc_user" {
   value = var.head_user
 }
