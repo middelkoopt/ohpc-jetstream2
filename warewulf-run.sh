@@ -6,7 +6,7 @@ echo "=== warewulf-run.sh"
 export OS_NAME
 
 echo "--- wait for head $OHPC_HEAD"
-while ! ssh $OHPC_USER@$OHPC_HEAD hostname ; do echo . ; sleep .2 ; done
+while ! ssh ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT hostname ; do echo . ; sleep .2 ; done
 
 ansible --verbose all -m ping
 
@@ -16,5 +16,5 @@ ansible-playbook -v playbooks/warewulf-head.yaml
 ansible-playbook -v playbooks/image-el9.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
-echo $OHPC_USER@$OHPC_HEAD
+echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_HEAD
 echo '--- done'
