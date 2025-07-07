@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
+DIST=${1:-rockylinux}
+VERSION=${2:-9}
 : ${ARCH:=$(uname -m)}
-: ${DIST:=rockylinux}
-: ${VERSION:=9}
 : ${DEST:=./images}
 : ${IMAGE_NAME:=head}
 : ${IMAGE_SIZE:=40G}
