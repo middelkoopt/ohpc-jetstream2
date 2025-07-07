@@ -5,8 +5,10 @@ set -e
 : ${DIST:=rockylinux}
 : ${VERSION:=9}
 : ${DEST:=./images}
+: ${IMAGE_NAME:=head}
+: ${IMAGE_SIZE:=40G}
 
-echo "=== download-image.sh ${DIST} ${VERSION} ${ARCH} ${DEST}"
+echo "=== new-image.sh ${DIST} ${VERSION} ${ARCH} ${DEST} ${IMAGE_NAME} ${IMAGE_SIZE}"
 
 case "$ARCH" in
     x86_64|amd64)
@@ -34,10 +36,19 @@ case "$DIST" in
         ;;
 esac
 
-## Download and overwrite head.qcow2
 IMAGE_FILE="${DEST}/${IMAGE_URL##*/}"
+echo "--- Download ${IMAGE_FILE} to ${DEST} if needed"
 if [ ! -r "${IMAGE_FILE}" ]; then
   install -vdp ${DEST}
   wget "${IMAGE_URL}" -P "${DEST}"
 fi
-cp -v "${IMAGE_FILE}" "head.qcow2"
+
+echo "--- Remove ${IMAGE_NAME}.qcow2"
+rm -fv ${IMAGE_NAME}.qcow2
+
+echo "--- Copy ${IMAGE_FILE} to ${IMAGE_NAME}.qcow2"
+cp -v "${IMAGE_FILE}" "${IMAGE_NAME}.qcow2"
+
+echo "--- Resize to ${IMAGE_SIZE}"
+qemu-img resize "${IMAGE_NAME}.qcow2" ${IMAGE_SIZE}
+

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 export IMAGE_NAME=${1:-head}
-export IMAGE_RAM=${2:-1}
-export IMAGE_CPUS=${3:-1}
+export IMAGE_RAM=${2:-2}
+export IMAGE_CPUS=${3:-2}
 : ${SESSION:=ohpc}
 
 echo "=== run-image.sh ${SESSION} IMAGE_NAME=${IMAGE_NAME} IMAGE_RAM=${IMAGE_RAM} IMAGE_CPUS=${IMAGE_CPUS}"

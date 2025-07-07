@@ -367,10 +367,9 @@ wwctl image delete nodeimage --yes
 ```
 
 ## Debug Notes
-PXE
-```
-dh -p SimpleNetwork
-dh -p PxeBaseCode
-```
 
-
+OHPC slurm bug
+```latex
+% steps.tex@146
+% ohpc_command perl -pi -e "s|/var/log/|/var/log/slurm/|" /etc/slurm/slurm.conf
+```

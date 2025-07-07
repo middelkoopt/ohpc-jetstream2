@@ -3,7 +3,7 @@
 
 ## Head node configuration
 ntp_server=pool.ntp.org
-sms_name=head.novalocal
+sms_name=$(hostname -f)
 sms_ip=10.5.0.8
 sms_eth_internal=eth1
 internal_netmask=255.255.0.0
@@ -21,6 +21,10 @@ c_ip[0]=10.5.1.1
 c_ip[1]=10.5.1.2
 c_ip[2]=10.5.1.3
 c_ip[3]=10.5.1.4
+c_mac[0]=52:54:00:05:01:01
+c_mac[1]=52:54:00:05:01:02
+c_mac[2]=52:54:00:05:01:03
+c_mac[3]=52:54:00:05:01:04
 c_name[0]=c1
 c_name[1]=c2
 c_name[2]=c3
@@ -32,15 +36,13 @@ provision_wait=1
 update_slurm_nodeconfig=1
 slurm_node_config="NodeName=c[1-4] State=UNKNOWN"
 
-## Customize slurm.conf
-# sed -i 's/^NodeName=.*$/NodeName=c[1-4] State=UNKNOWN/' /etc/slurm/slurm.conf
-# sed -i 's/^PartitionName=.*$/PartitionName=normal Nodes=c[1-4] Default=YES/' /etc/slurm/slurm.conf
-
-## Map MAC to IP on cluster
-unset c_mac
+## Update MAC based on IP for pre-allocated nodes (Openstack)
 for ((i=0; i<$num_computes; i++)) ; do
   ping -q -c 1 -W 0.2 ${c_ip[$i]}
-  c_mac[$i]=$(ip -json neigh | jq -r ".[] | select(.dst == \"${c_ip[$i]}\").lladdr")
+  mac=$(ip -json neigh | jq -r ".[] | select(.dst == \"${c_ip[$i]}\").lladdr")
+  if [[ $mac != "null" ]] ; then
+    c_mac[$i]=$mac
+  fi
 done
 echo ${c_mac[@]}
 
@@ -49,4 +51,5 @@ echo ${c_mac[@]}
 #dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC3:/3.4:/Factory/EL_9/
 
 # 3.1 Enable OpenHPC repository (not in recipe.sh)
-dnf install -y http://repos.openhpc.community/OpenHPC/3/EL_9/x86_64/ohpc-release-3-1.el9.x86_64.rpm
+ARCH=$(uname -m)
+dnf install -y http://repos.openhpc.community/OpenHPC/3/EL_9/${ARCH}/ohpc-release-3-1.el9.${ARCH}.rpm
