@@ -155,6 +155,7 @@ Generate CI `recipe.sh` in target folder
 ```
 
 ```bash
+./create.sh 1 5
 ./test-recipe-run.sh ~/source/ohpc/docs/recipes/install/almalinux9/x86_64/warewulf4/slurm/recipe.sh
 ```
 
