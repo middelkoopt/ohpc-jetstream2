@@ -17,8 +17,3 @@ ssh-keygen -R "[localhost]:8022"
 for (( i=1 ; i<=n ; i++ )) ; do
   ./run-image.sh c$i $ram 1
 done
-
-echo "--- attaching to tmux session '${SESSION}:0' if not already attached"
-if [ "$(tmux list-clients -t ${SESSION})" == "" ] ; then
-    exec tmux attach -t ${SESSION}:0
-fi

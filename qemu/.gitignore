@@ -1,7 +1,9 @@
-/images/
-cloud-init/
-*.qcow2
-*.img
-*.fd
 id_rsa
 id_rsa.pub
+images/
+cloud-init/
+*.img
+*.qcow2
+*.fd
+*.ctl/
+*.pid
