@@ -99,5 +99,5 @@
         wwctl image exec nodeimage -- \
           /usr/bin/dracut --verbose --force --no-hostonly --regenerate-all --add wwinit \
           --install sfdisk --install blockdev --install udevadm --install mkfs --install mkfs.ext4  --install wipefs
-        
+
         wwctl overlay build
