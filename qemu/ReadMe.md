@@ -24,5 +24,5 @@ sudo apt-get install --yes ansible
 ansible-galaxy collection install community.general
 
 ## Qemu
-sudo apt-get install --yes qemu-system mkisofs
+sudo apt-get install --yes qemu-system mkisofs vde-switch
 ```
