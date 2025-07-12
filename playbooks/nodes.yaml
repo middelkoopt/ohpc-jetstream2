@@ -16,11 +16,12 @@
             ping -q -c 4 -W 0.2 -i 0.2 $IP > /dev/null || /bin/true
             MAC=$(ip -json neigh | jq -r ".[] | select(.dst == \"${IP}\").lladdr")
             wwctl node delete --yes $NODE || /bin/true
-            echo $IP $NODE $MAC
-            wwctl node add $NODE --profile=nodes --netname=default --ipaddr=$IP
-            if [[ "${MAC}" != "null" ]] ; then
-              wwctl node set --yes $NODE --hwaddr=$MAC
+            if [[ "${MAC}" == "null" ]] ; then
+              printf -v MAC "52:54:00:05:01:%02x" $I
             fi
+            echo "--- adding node $NODE $IP $MAC"
+            wwctl node add $NODE --profile=nodes --netname=default --ipaddr=$IP --hwaddr=$MAC
+
           done
 
           wwctl overlay build

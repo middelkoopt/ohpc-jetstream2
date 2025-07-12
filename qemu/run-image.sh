@@ -105,6 +105,5 @@ else
         -drive if=virtio,file=${IMAGE_NAME}.qcow2,format=qcow2 \
         -device virtio-net-pci,netdev=net0,mac=52:54:00:05:01:${IMAGE_ID} \
         -netdev ${QEMU_NET},id=net0 \
-        -boot order=n \
         -nographic
 fi
