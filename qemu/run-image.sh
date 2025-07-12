@@ -39,11 +39,12 @@ case "$OS" in
         QEMU_ACCEL="-accel kvm"
         ;;
     Darwin)
-        # Brew's aarch64 QEMU_EFI.fd does not support network booting 
+        # For Brew, aarch64 UEFI does not support network booting (/opt/homebrew/Cellar/qemu/*/share/qemu/edk2-aarch64-code.fd) 
         if [ ! -f QEMU_EFI.fd ] ; then
             if [ -n "$(which colima)" ] ; then
                 echo "--- using QEMU_EFI.fd from colima"
-                colima ssh cp /usr/share/qemu-efi-aarch64/QEMU_EFI.fd .
+                colima ssh -- sudo apt-get install --yes qemu-efi-aarch64
+                colima ssh -- cp -v /usr/share/qemu-efi-aarch64/QEMU_EFI.fd .
             else 
                 echo "--- downloading QEMU_EFI.fd"
                 wget -nv -nc https://releases.linaro.org/components/kernel/uefi-linaro/latest/release/qemu64/QEMU_EFI.fd
