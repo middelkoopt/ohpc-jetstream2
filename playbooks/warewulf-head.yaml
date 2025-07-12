@@ -7,7 +7,7 @@
       ansible.builtin.dnf:
         name:
           - "https://github.com/{{ warewulf_account }}/warewulf/releases/download/\
-            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el9.{{ arch }}.rpm"
+            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el9.{{ ansible_architecture }}.rpm"
         disable_gpg_check: true
       when:
         - ansible_pkg_mgr == "dnf"

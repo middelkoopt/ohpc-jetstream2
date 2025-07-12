@@ -42,7 +42,7 @@
 
     - name: Install OHPC release
       ansible.builtin.dnf:
-        name: http://repos.openhpc.community/OpenHPC/3/EL_9/{{ arch }}/ohpc-release-3-1.el9.{{ arch }}.rpm
+        name: http://repos.openhpc.community/OpenHPC/3/EL_9/{{ ansible_architecture }}/ohpc-release-3-1.el9.{{ ansible_architecture }}.rpm
         disable_gpg_check: true
 
     - name: Add OpenHPC Release Factory (3.4)
