@@ -283,3 +283,7 @@ output "ohpc_head" {
 output "ohpc_user" {
   value = var.head_user
 }
+
+output "ohpc_port" {
+  value = 22
+}

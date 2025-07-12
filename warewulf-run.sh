@@ -16,5 +16,5 @@ ansible-playbook -v playbooks/warewulf-head.yaml
 ansible-playbook -v playbooks/image-el9.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
-echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_HEAD
+echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT
 echo '--- done'

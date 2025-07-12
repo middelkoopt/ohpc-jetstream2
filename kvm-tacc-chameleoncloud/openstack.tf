@@ -202,6 +202,10 @@ output "ohpc_head" {
   value = local.ohpc_ipv4
 }
 
+output "ohpc_port" {
+  value = 22
+}
+
 output "ohpc_user" {
   value = var.head_user
 }

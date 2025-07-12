@@ -12,4 +12,4 @@ OHPC_HEAD=$(tofu -chdir=${OS_NAME} output -raw ohpc_head)
 OHPC_PORT=$(tofu -chdir=${OS_NAME} output -raw ohpc_port)
 OHPC_USER=$(tofu -chdir=${OS_NAME} output -raw ohpc_user)
 
-echo "--- env: ${OS_NAME} ${OHPC_USER}@${OHPC_HEAD}:${OHPC_PORT}"
+echo "--- env: ssh://${OHPC_USER}@${OHPC_HEAD}:${OHPC_PORT}"
