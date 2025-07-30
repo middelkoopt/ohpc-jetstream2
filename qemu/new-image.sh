@@ -2,7 +2,7 @@
 set -e
 
 DIST=${1:-rockylinux}
-VERSION=${2:-9}
+VERSION=${2:-10}
 : ${ARCH:=$(uname -m)}
 : ${DEST:=./images}
 : ${IMAGE_NAME:=head}

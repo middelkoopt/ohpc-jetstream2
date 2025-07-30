@@ -428,6 +428,13 @@ OBS
 https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
 ```
 
+### Warewulf
+
+Notes:
+* rpm: warewulf requires dhcpd-server package
+* build: arm64-efi/snponly.efi is missing from /var/lib/tftpboot/warewulf
+* fix selinux attributes for /var/lib/tftpboot
+
 ## Delete
 
 Delete warewulf configuration

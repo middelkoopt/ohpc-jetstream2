@@ -87,7 +87,7 @@
       ansible.builtin.dnf:
         name:
           - "https://github.com/{{ warewulf_account }}/warewulf/releases/download/\
-            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el9.{{ ansible_architecture }}.rpm"
+            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el10.{{ ansible_architecture }}.rpm"
         disable_gpg_check: true
       when:
         - not warewulf_build
@@ -95,8 +95,8 @@
     - name: Build Warewulf from source
       # noqa: command-instead-of-module
       environment:
-        WWVERSION: "{{ warewulf_rpm_version }}"
-        WWACCOUNT: "{{ warewulf_rpm_account }}"
+        WWACCOUNT: "{{ warewulf_account }}"
+        WWVERSION: "{{ warewulf_build_ref }}"
       ansible.builtin.shell: |-
         set -e -x
 
@@ -142,7 +142,7 @@
         dns_servers=8.8.8.8
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
-        sms_eth_internal=eth1
+        sms_eth_internal=enp0s2
 
         ## Configure warewulf.conf
         yq -i /etc/warewulf/warewulf.conf --from-file /dev/stdin <<EOF
@@ -157,7 +157,7 @@
           .ssh["key types"] -= ["dsa"]
         EOF
 
-        ## Configure nodes.conf)
+        ## Configure nodes.conf
         yq -i /etc/warewulf/nodes.conf --from-file /dev/stdin <<EOF
           .nodeprofiles.default.kernel.args -= ["quiet"]
         EOF
@@ -178,6 +178,10 @@
         ## FIXME: fix selinux attributes for /var/lib/tftpboot
         semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
         restorecon -R -v /var/lib/tftpboot
+
+        ## FIXME: missing arm64 ipxe
+        install -dvp /var/lib/tftpboot/warewulf/arm64-efi
+        cp -v /usr/share/ipxe/arm64-efi/snponly.efi /var/lib/tftpboot/warewulf/arm64-efi/snponly.efi
 
         ## Configure warewulf nodes profile for network
         wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}

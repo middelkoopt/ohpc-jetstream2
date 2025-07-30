@@ -29,6 +29,8 @@ network:
   version: 2
   ethernets:
     eth1:
+      match:
+        macaddress: "52:54:00:05:00:08"
       addresses:
         - 10.5.0.8/16
         - fd00:5::8/64
