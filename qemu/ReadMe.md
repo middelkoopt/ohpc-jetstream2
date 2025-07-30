@@ -25,4 +25,5 @@ ansible-galaxy collection install community.general
 
 ## Qemu
 sudo apt-get install --yes qemu-system mkisofs vde-switch
+sudo usermod -a -G kvm $USER
 ```

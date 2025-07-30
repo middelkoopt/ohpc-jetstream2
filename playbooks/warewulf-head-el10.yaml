@@ -25,7 +25,8 @@
       ansible.builtin.yum_repository:
         name: fedora-updates-40
         description: Fedora 40
-        baseurl: https://download.fedoraproject.org/pub/fedora/linux/updates/40/Everything/$basearch/
+        # baseurl: https://download.fedoraproject.org/pub/fedora/linux/updates/40/Everything/$basearch/
+        metalink: https://mirrors.fedoraproject.org/metalink?repo=updates-released-f40&arch=$basearch
         enabled: false
         gpgcheck: false
 
