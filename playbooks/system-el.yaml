@@ -15,6 +15,7 @@
           - yum-utils # AlmaLinux
           - dnf-plugins-core
           - python3-pip
+          - vim
 
     - name: Check if reboot is required
       ansible.builtin.command: /usr/bin/needs-restarting -r

@@ -57,3 +57,127 @@
         enabled: true
         state: restarted
       when: chrony_conf.changed
+
+    - name: Install Warewulf from package
+      ansible.builtin.dnf:
+        name:
+          - "https://github.com/{{ warewulf_account }}/warewulf/releases/download/\
+            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el9.{{ ansible_architecture }}.rpm"
+        disable_gpg_check: true
+      when:
+        - not warewulf_build
+
+    - name: Build Warewulf from source
+      # noqa: command-instead-of-module
+      environment:
+        WWACCOUNT: "{{ warewulf_account }}"
+        WWVERSION: "{{ warewulf_build_ref }}"
+      ansible.builtin.shell: |-
+        set -e -x
+
+        ## Config
+        : ${WWACCOUNT:=warewulf}
+        : ${WWVERSION:=main}
+
+        ## Clone Warewulf
+        rm -rf /usr/src/warewulf
+        git clone --no-checkout https://github.com/${WWACCOUNT}/warewulf.git /usr/src/warewulf
+        cd /usr/src/warewulf
+        git checkout -B $(basename "${WWVERSION}") ${WWVERSION}
+
+        ## Build Warewulf
+        make clean
+        make config \
+          PREFIX=/usr \
+          SYSCONFDIR=/etc \
+          LOCALSTATEDIR=/var/lib \
+          SHAREDSTATEDIR=/var/lib \
+          TFTPDIR=/var/lib/tftpboot
+        make build
+        make install
+        wwctl completion bash > /etc/bash_completion.d/wwctl
+
+      args:
+        creates: /usr/bin/wwctl
+      when:
+        - warewulf_build
+
+    - name: Setup the head node
+      # noqa: command-instead-of-module
+      ansible.builtin.shell: |-
+        set -e -x
+
+        ## Config
+        sms_name=$(hostname)
+        sms_ip=10.5.0.8
+        internal_network=10.5.0.0
+        internal_netmask=255.255.0.0
+        ipv4_gateway=10.5.0.1
+        dns_servers=8.8.8.8
+        dhcp_start=10.5.1.1
+        dhcp_end=10.5.1.254
+
+        ## Configure warewulf.conf
+        sed -i "s/^ipaddr:.*/ipaddr: ${sms_ip}/" /etc/warewulf/warewulf.conf
+        sed -i "s/^netmask:.*/netmask: ${internal_netmask}/" /etc/warewulf/warewulf.conf
+        sed -i "s/^network:.*/network: ${internal_network}/" /etc/warewulf/warewulf.conf
+        sed -i "s/template: default/template: static/" /etc/warewulf/warewulf.conf
+        sed -i "s/range start:.*/range start: ${dhcp_start}/" /etc/warewulf/warewulf.conf
+        sed -i "s/range end:.*/range end: ${dhcp_end}/" /etc/warewulf/warewulf.conf
+        sed -i "/- quiet/d" /etc/warewulf/nodes.conf
+
+        ## Configure profiles and overlays
+        wwctl profile delete --yes nodes || /bin/true
+        wwctl profile add nodes --profile=default --comment="Nodes profile"
+
+        ## Start Warewulf
+        systemctl enable --now warewulfd
+        wwctl configure --all
+        bash /etc/profile.d/ssh_setup.sh # configure ssh
+        systemctl status warewulfd
+
+        ## Munge
+        if [ ! -r /etc/munge/munge.key ] ; then
+          create-munge-key
+        fi
+        wwctl overlay delete --force munge || /bin/true
+        wwctl overlay create munge
+        wwctl overlay mkdir munge --mode=0700 /etc/munge
+        wwctl overlay import munge /etc/munge/munge.key
+        wwctl overlay chown munge /etc/munge/munge.key $(id -u munge) $(id -g munge)
+        wwctl overlay chown munge /etc/munge $(id -u munge) $(id -g munge)
+
+        ## Slurm
+        if [ ! -r /etc/slurm/slurm.conf ] ; then
+          cp -v /usr/share/doc/slurmctld/examples/slurm.conf.simple /etc/slurm/slurm.conf
+        fi
+        sed -i "s/^SlurmctldHost=.*/SlurmctldHost=${sms_name}/" /etc/slurm/slurm.conf
+        grep '^SlurmctldHost=' /etc/slurm/slurm.conf
+
+        sed -i 's/^NodeName=.*$/NodeName=c[1-4] State=UNKNOWN/' /etc/slurm/slurm.conf
+        grep '^NodeName' /etc/slurm/slurm.conf
+
+        sed -i 's/^PartitionName=.*$/PartitionName=normal Nodes=c[1-4] Default=YES/' /etc/slurm/slurm.conf
+        grep '^PartitionName' /etc/slurm/slurm.conf
+
+        grep 'SlurmctldParameters=' /etc/slurm/slurm.conf || echo 'SlurmctldParameters=enable_configless' >> /etc/slurm/slurm.conf
+        grep 'SlurmctldParameters=' /etc/slurm/slurm.conf
+
+        ## Configure warewulf nodes profile for network
+        wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
+
+        ## Add new overlays to nodes profile
+        wwctl profile set --yes nodes --system-overlays=munge,sfdisk,mkfs
+
+        ## Start slurm
+        systemctl enable --now munge
+        systemctl status munge
+
+        systemctl enable --now slurmctld
+        systemctl status slurmctld
+
+        ## Create a test user
+        useradd --create-home --shell=/bin/bash --user-group test
+
+      args:
+        creates: /var/run/slurm/slurmctld.pid

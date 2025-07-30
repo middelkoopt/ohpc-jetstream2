@@ -29,8 +29,8 @@ network:
   version: 2
   ethernets:
     eth1:
-      dhcp4: no
       addresses:
         - 10.5.0.8/16
+        - fd00:5::8/64
 EOF
 mkisofs -output ./seed.img -volid cidata -rational-rock -joliet -input-charset utf-8 ./cloud-init

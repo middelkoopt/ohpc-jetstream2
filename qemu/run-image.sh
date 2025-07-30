@@ -107,4 +107,6 @@ else
         -device virtio-net-pci,netdev=net0,mac=52:54:00:05:01:${IMAGE_ID} \
         -netdev ${QEMU_NET},id=net0 \
         -nographic
+        # -fw_cfg name=opt/org.tianocore/IPv4PXESupport,string=n \
+        # -fw_cfg name=opt/org.tianocore/IPv6PXESupport,string=y \
 fi

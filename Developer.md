@@ -216,6 +216,8 @@ cd source/ohpc
 sudo ./tests/ci/prepare-ci-environment.sh
 sudo ./tests/ci/run_build.py $USER ./components/admin/docs/SPECS/docs.spec
 sudo ./tests/ci/run_build.py $USER ./components/provisioning/warewulf/SPECS/warewulf.spec
+sudo ./tests/ci/run_build.py $USER ./components/admin/yq/SPECS/yq.spec
+
 ```
 
 ## Warewulf OpenHPC Upgrade
@@ -340,14 +342,13 @@ rsync -av /usr/src/warewulf/dracut/modules.d/ $chroot/usr/lib/dracut/modules.d/ 
             type_guid: "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 ```
 
-Yq - https://rpmfind.net/linux/rpm2html/search.php?query=yq&submit=Search+...&system=fedora&arch=x86_64
-
 Debugging: `curl` some data
 ```bash
 mac=$(wwctl node list --json | jq -r '.c1."network devices".default.hwaddr')
 curl -4 localhost:9873/ipxe/${mac}
 curl -4 localhost:9873/overlay-file/debug/tstruct.md.ww?render=c1
 curl -4 localhost:9873/overlay-file/sfdisk/warewulf/sfdisk/disks.ww?render=c1
+wwctl overlay cat --render=c1 debug /tstruct.md.ww
 wwctl overlay cat --render=c1 sfdisk /warewulf/sfdisk/disks.ww
 wwctl overlay cat --render=c1 sfdisk /warewulf/wwinit.d/10-sfdisk.sh.ww
 wwctl overlay cat --render=c1 mkfs /warewulf/wwinit.d/20-mkfs.sh.ww
@@ -358,6 +359,74 @@ Debug Notes
 * Documentation missing for ignition file.
 * Commandline must have `root=persistent wwinit.id={{id}} wwinit.ignition=http://{{.Ipaddr}}:{{.Port}}/overlay-file/persistent`
 * rd.shell
+
+## Warewulf IPv6
+
+Provision
+```bash
+# https://koji.fedoraproject.org/koji/builds?state=1&type=rpm&tagID=f40-updates&packageID=40030
+dnf install -y https://kojipkgs.fedoraproject.org/packages/yq/4.43.1/5.fc40/aarch64/yq-4.43.1-5.fc40.aarch64.rpm
+
+systemctl disable --now dhcpd.service
+dnf install -y dnsmasq
+echo "interface=eth1" > /etc/dnsmasq.d/ww4-interface.conf
+
+yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
+yq -i '.dhcp["systemd name"] = "dnsmasq" | .tftp["systemd name"] = "dnsmasq"' /etc/warewulf/warewulf.conf
+
+wwctl node set -y c1 --ipaddr6=fd00:5::1:1
+wwctl node delete -y 'c[2-4]'
+
+wwctl configure --all
+wwctl overlay build
+
+# Build new iPXE with 
+cd /usr/src
+git clone https://github.com/ipxe/ipxe.git
+cd ipxe/src
+make bin-arm64-efi/ipxe.efi
+cp -v bin-arm64-efi/ipxe.efi /var/lib/tftpboot/warewulf
+```
+
+/etc/dnsmasq.d/ww4-hosts.conf
+```conf
+enable-ra
+
+dhcp-match=set:aarch64,option6:client-arch,11 # EFI aarch64
+dhcp-option-force=tag:aarch64,option6:bootfile-url,"tftp://[fd00:5::8]/warewulf/ipxe.efi"
+
+dhcp-userclass=set:iPXE,iPXE
+dhcp-option-force=tag:iPXE,option6:bootfile-url,"http://[fd00:5::8]:9873/ipxe/${mac:hexhyp}?assetkey=${asset}&uuid=${uuid}"
+
+dhcp-range=fd00:5::1:1,fd00:5::1:F0,6h
+
+```
+
+reconfigure
+```bash
+systemctl restart warewulfd.service
+systemctl restart dnsmasq.service
+```
+
+Node
+```bash
+ip addr add fd00:5::1:1/64 dev eth0
+curl http://[fd00:5::8]:9873/ipxe/52:54:00:05:01:01
+```
+
+Notes:
+ * Document Authority variable and mention RFC 3986
+ * Template Ipaddr is just the IP; warewulf.conf ipaddr can use CIDR to set network/netmask, etc.
+ * You can use IPv6 addresses in ipaddr and will (mostly?) work (single IPv6 stack)
+ * Template Ipadd6 uses CIDR notation; warewulf.conf ipaddr6 must use CIDR notation. 
+ * Going to make Ipaddr6 just the IP
+
+## OpenHPC 4.0
+
+OBS
+```
+https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
+```
 
 ## Delete
 
