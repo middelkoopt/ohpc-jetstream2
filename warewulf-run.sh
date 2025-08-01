@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "=== warewulf-run.sh"
+VERSION=${1:-10}
+
+echo "=== warewulf-run.sh el${VERSION}"
 . ./get-env.sh
 export OS_NAME
 
@@ -11,8 +13,8 @@ while ! ssh ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT hostname ; do echo . ; sleep 
 ansible --verbose all -m ping
 
 ansible-playbook -v playbooks/system-el.yaml
-ansible-playbook -v playbooks/warewulf-head-el10.yaml
-ansible-playbook -v playbooks/image-el10.yaml
+ansible-playbook -v playbooks/warewulf-head-el${VERSION}.yaml
+ansible-playbook -v playbooks/image-el${VERSION}.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
 echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT
