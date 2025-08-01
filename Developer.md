@@ -386,10 +386,9 @@ git clone https://github.com/ipxe/ipxe.git
 cd ipxe/src
 make bin-arm64-efi/ipxe.efi
 cp -v bin-arm64-efi/ipxe.efi /var/lib/tftpboot/warewulf
-```
 
-/etc/dnsmasq.d/ww4-hosts.conf
-```conf
+## Fix dnsmasq
+sudo tee -a /etc/dnsmasq.d/ww4-hosts.conf <<\EOF
 enable-ra
 
 dhcp-match=set:aarch64,option6:client-arch,11 # EFI aarch64
@@ -399,13 +398,12 @@ dhcp-userclass=set:iPXE,iPXE
 dhcp-option-force=tag:iPXE,option6:bootfile-url,"http://[fd00:5::8]:9873/ipxe/${mac:hexhyp}?assetkey=${asset}&uuid=${uuid}"
 
 dhcp-range=fd00:5::1:1,fd00:5::1:F0,6h
+EOF
 
-```
-
-reconfigure
-```bash
+# reconfigure
 systemctl restart warewulfd.service
 systemctl restart dnsmasq.service
+
 ```
 
 Node
