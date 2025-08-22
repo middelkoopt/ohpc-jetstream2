@@ -220,6 +220,12 @@ sudo ./tests/ci/run_build.py $USER ./components/admin/yq/SPECS/yq.spec
 
 ```
 
+Copy over to VM
+```bash
+cp -v ~/rpmbuild/RPMS/$(uname -m)/warewulf-ohpc-*.rpm
+scp ./warewulf-ohpc-*.rpm scp://admin@localhost:8022/
+```
+
 ## Warewulf OpenHPC Upgrade
 
 * https://warewulf.org/docs/v4.6.x/server/upgrade.html
@@ -429,9 +435,9 @@ https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
 ### Warewulf
 
 Notes:
-* rpm: warewulf requires dhcpd-server package
 * build: arm64-efi/snponly.efi is missing from /var/lib/tftpboot/warewulf
 * fix selinux attributes for /var/lib/tftpboot
+* Systemd files in overlay are absolute symlinks (issue or not?)
 
 ## Delete
 
