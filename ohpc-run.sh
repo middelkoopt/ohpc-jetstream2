@@ -6,7 +6,7 @@ echo "=== ohpc-run.sh"
 export OS_NAME
 
 echo "--- wait for head $OHPC_HEAD"
-while ! ssh $OHPC_USER@$OHPC_HEAD hostname ; do echo . ; sleep .2 ; done
+while ! ssh ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT hostname ; do echo . ; sleep .2 ; done
 
 ansible --verbose all -m ping
 

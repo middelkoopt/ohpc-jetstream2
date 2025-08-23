@@ -1,0 +1,16 @@
+[connection]
+id=enp0s2
+type=ethernet
+interface-name=enp0s2
+
+[ethernet]
+802-3-ethernet.mtu=8900
+
+[ipv4]
+method=manual
+address1=10.5.0.8/16
+
+[ipv6]
+method=manual
+addr-gen-mode=eui64
+address1=fd00:5::8/64

@@ -439,6 +439,22 @@ Notes:
 * fix selinux attributes for /var/lib/tftpboot
 * Systemd files in overlay are absolute symlinks (issue or not?)
 
+```bash
+ln -sf $PWD /home/vscode/rpmbuild
+make spec
+sudo dnf build-dep -y warewulf.spec
+make rpm
+(cd rpmbuild/RPMS && ln -sf aarch64/warewulf-*.rpm warewulf.rpm )
+```
+
+```bash
+python3 -m http.server -d rpmbuild/RPMS/ 8080
+```
+
+```
+http://192.168.105.1:8080/warewulf.rpm
+```
+
 ## Delete
 
 Delete warewulf configuration

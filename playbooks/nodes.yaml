@@ -27,9 +27,11 @@
           wwctl overlay build
           wwctl configure --all
 
-          # ## Nodes show up in /etc/hosts after `wwctl configure --all`
-          # scontrol reconfigure
-          # sinfo
+          ## Nodes show up in /etc/hosts after `wwctl configure --all`
+          if [[ -f /etc/slurm/slurm.conf ]] ; then
+            scontrol reconfigure
+            sinfo
+          fi
 
           touch /root/add-nodes.stamp
 
