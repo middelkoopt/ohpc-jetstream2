@@ -460,10 +460,13 @@ Test build
 # https://github.com/middelkoopt/warewulf/releases/download/v4.6.4/warewulf-4.6.4-1.el10.aarch64.rpm
 URL=https://github.com/middelkoopt/warewulf/releases/download
 VERSION=4.6.4
-ARCH=aarch64
+#ARCH=aarch64
+ARCH=x86_64
+#DIST=rockylinux/rockylinux
+DIST=almalinux
 for OS in 8 9 10 ; do
   echo "=== testing $OS"
-  docker run -it --rm rockylinux/rockylinux:${OS} dnf install -y "${URL}/v${VERSION}/warewulf-${VERSION}-1.el${OS}.${ARCH}.rpm"
+  docker run -it --rm ${DIST}:${OS} dnf install -y "${URL}/v${VERSION}/warewulf-${VERSION}-1.el${OS}.${ARCH}.rpm"
 done
 docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/middelkoopt/warewulf/releases/download/v${VERSION}/warewulf-${VERSION}-1.suse.lp155.${ARCH}.rpm
 ```
