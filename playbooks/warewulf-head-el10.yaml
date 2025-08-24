@@ -45,7 +45,7 @@
           - curl
           - jq
           - bash-completion
-          - initscripts-service # AlmaLinux
+          # - initscripts-service # AlmaLinux
 
     - name: Install packages
       ansible.builtin.dnf:
@@ -179,10 +179,6 @@
         ## FIXME: fix selinux attributes for /var/lib/tftpboot
         semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
         restorecon -R -v /var/lib/tftpboot
-
-        ## FIXME: missing arm64 ipxe
-        install -dvp /var/lib/tftpboot/warewulf/arm64-efi
-        cp -v /usr/share/ipxe/arm64-efi/snponly.efi /var/lib/tftpboot/warewulf/arm64-efi/snponly.efi
 
         ## Configure warewulf nodes profile for network
         wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}

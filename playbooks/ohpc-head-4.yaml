@@ -46,6 +46,12 @@
     #     name: http://repos.openhpc.community/OpenHPC/4/EL_10/{{ ansible_architecture }}/ohpc-release-4-1.el10.{{ ansible_architecture }}.rpm
     #     disable_gpg_check: true
 
+    - name: Install base packages
+      ansible.builtin.dnf:
+        name:
+          - bash-completion
+          - vim
+
     - name: Add OpenHPC Release Factory (4.0)
       ansible.builtin.yum_repository:
         name: openhpc-factory
@@ -67,11 +73,11 @@
           # - mtools
           # - initscripts-service # AlmaLinux
 
-    - name: Install Warewulf (OHPC)
-      when: ohpc_warewulf
-      ansible.builtin.dnf:
-        name:
-          - warewulf-ohpc
+    # - name: Install Warewulf (OHPC)
+    #   when: ohpc_warewulf
+    #   ansible.builtin.dnf:
+    #     name:
+    #       - warewulf-ohpc
 
     - name: Install Warewulf (Direct)
       when: not ohpc_warewulf
@@ -110,6 +116,9 @@
         dhcp_end=10.5.1.254
         sms_eth_internal=enp0s2
 
+        ## FIXME: Debugmode
+        dnf install -y /home/admin/warewulf-ohpc.rpm
+
         ## Cleanup failed setup
         wwctl profile delete nodes || true
         wwctl image delete --yes rocky-10 || true
@@ -119,17 +128,14 @@
         dnf install -y https://kojipkgs.fedoraproject.org/packages/yq/4.43.1/5.fc40/aarch64/yq-4.43.1-5.fc40.aarch64.rpm
 
         ## Configure warewulf.conf
-        yq -i /etc/warewulf/warewulf.conf --from-file /dev/stdin <<EOF
-          .ipaddr = "${sms_ip}" |
-          .netmask = "${internal_netmask}" |
-          .network = "${internal_network}" |
+        yq e '
+          .ipaddr = "'${sms_ip}'" |
+          .netmask = "'${internal_netmask}'" |
+          .network = "'${internal_network}'" |
           .dhcp["template"] = "static" |
-          .dhcp["range start"] = "${dhcp_start}" |
-          .dhcp["range end"] = "${dhcp_end}" |
-          .dhcp["systemd name"] = "dnsmasq" |
-          .tftp["systemd name"] = "dnsmasq" |
-          .ssh["key types"] -= ["dsa"]
-        EOF
+          .dhcp["range start"] = "'${dhcp_start}'" |
+          .dhcp["range end"] = "'${dhcp_end}'"' \
+          -i /etc/warewulf/warewulf.conf
 
         ## Warewulf
         wwctl configure --all
@@ -137,10 +143,6 @@
 
         ## Configure dnsmasq
         echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
-
-        ## FIXME: missing arm64 ipxe
-        install -dvp /var/lib/tftpboot/warewulf/arm64-efi
-        cp -v /usr/share/ipxe/arm64-efi/snponly.efi /var/lib/tftpboot/warewulf/arm64-efi/snponly.efi
 
         ## Slurm
         cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf
@@ -165,9 +167,8 @@
         wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
 
         ## Update kernel args for debug messages
-        yq -i /etc/warewulf/nodes.conf --from-file /dev/stdin <<EOF
-          .nodeprofiles.default.kernel.args -= ["quiet"]
-        EOF
+        yq e '.nodeprofiles.default.kernel.args -= ["quiet"]' \
+          -i /etc/warewulf/nodes.conf
 
         ## Create a test user
         useradd --create-home --shell=/bin/bash --user-group auser

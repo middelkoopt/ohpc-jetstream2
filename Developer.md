@@ -432,7 +432,7 @@ OBS
 https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
 ```
 
-### Warewulf
+### Warewulf Build
 
 Notes:
 * build: arm64-efi/snponly.efi is missing from /var/lib/tftpboot/warewulf
@@ -454,6 +454,26 @@ python3 -m http.server -d rpmbuild/RPMS/ 8080
 ```
 http://192.168.105.1:8080/warewulf.rpm
 ```
+
+Test build
+```bash
+# https://github.com/middelkoopt/warewulf/releases/download/v4.6.4/warewulf-4.6.4-1.el10.aarch64.rpm
+URL=https://github.com/middelkoopt/warewulf/releases/download
+VERSION=4.6.4
+ARCH=aarch64
+for OS in 8 9 10 ; do
+  echo "=== testing $OS"
+  docker run -it --rm rockylinux/rockylinux:${OS} dnf install -y "${URL}/v${VERSION}/warewulf-${VERSION}-1.el${OS}.${ARCH}.rpm"
+done
+docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/middelkoopt/warewulf/releases/download/v${VERSION}/warewulf-${VERSION}-1.suse.lp155.${ARCH}.rpm
+```
+
+### Notes
+* Install dnsmasq for EL >= 10
+* Do not install tftpd for EL >=10
+* For EL >= 10, make tftp and dhcp default to dnsmasq. Remove dsa as a ssh alogrithm
+* Strip path from tftp files for dnsmasq template just as tftp.go code does
+
 
 ## Delete
 
