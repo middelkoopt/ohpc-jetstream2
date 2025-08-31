@@ -205,16 +205,10 @@
         passwd -d root # allow serial console login
 
         {% if ohpc_factory | default(false) %}
-        ## FIXME: verify that the OpenHPC Factory packages are not signed
-        #dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
-        cat > /etc/yum.repos.d/openhpc.repo <<EOF
-        [openhpc-factory]
-        name=OpenHPC Factory Repository
-        baseurl=http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
-        enabled=1
-        gpgcheck=0
-        EOF
+        dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
+        rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
         {% endif %}
+
         ## FIXME: not yet released
         # dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${arch}/ohpc-release-4-0.el10.${arch}.rpm
 
