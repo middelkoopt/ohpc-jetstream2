@@ -1,18 +1,18 @@
-## Test Recipe Configuration
+## Test Recipe Configuration for OpenHPC 4.x
 # This gets sourced by the recipie.sh by setting OHPC_INPUT_LOCAL
 
 ## Head node configuration
 ntp_server=pool.ntp.org
 sms_name=$(hostname -f)
 sms_ip=10.5.0.8
-sms_eth_internal=eth1
+sms_eth_internal=enp0s2
 internal_netmask=255.255.0.0
 internal_network=10.5.0.0
 ipv4_gateway=10.5.0.1
 dns_servers=8.8.8.8
 
 ## Compute node configuration
-eth_provision=eth0
+eth_provision=enp0s1
 
 ## Cluster configuration
 compute_prefix=c
@@ -47,9 +47,14 @@ done
 echo ${c_mac[@]}
 
 ## Setup OpenHPC Repo
-# Local: Enable development repo (3.4)
-dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC3:/3.4:/Factory/EL_9/
+# Local: Enable development repo (4.0)
+dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
+rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
 
 # 3.1 Enable OpenHPC repository (not in recipe.sh)
 ARCH=$(uname -m)
-dnf install -y http://repos.openhpc.community/OpenHPC/3/EL_9/${ARCH}/ohpc-release-3-1.el9.${ARCH}.rpm
+## FIXME: unreleased
+# dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${ARCH}/ohpc-release-4-0.el10.${ARCH}.rpm
+
+## Prep node 
+nmcli device disconnect $sms_eth_internal || :

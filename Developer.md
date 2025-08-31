@@ -107,10 +107,12 @@ ibnodes
 
 ## OHPC Documentation
 
-Docs build dep (Rocky)
+Docs build dep (Rocky/Lima)
 ```bash
-sudo dnf install -y git epel-release
-sudo dnf install -y make gawk latexmk texlive-collection-latexrecommended texlive-multirow texlive-tcolorbox
+lima sudo dnf install -y git epel-release
+lima sudo dnf install -y --enablerepo=devel latexmk
+lima sudo dnf install -y make gawk latexmk texlive-collection-latexrecommended texlive-multirow texlive-tcolorbox
+lima make
 ```
 
 Doc build deps (Ubuntu/Debian/Colima)
@@ -430,6 +432,17 @@ Notes:
 OBS
 ```
 https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
+```
+
+snippets
+```bash
+./delete.sh && (cd ./qemu && ./new-image.sh rocky 10) && ./create.sh
+ssh -t ssh://admin@localhost:8022 sudo -i
+dnf install -y https://kojipkgs.fedoraproject.org//packages/yq/4.47.1/2.el9/aarch64/yq-4.47.1-2.el9.$(uname -m).rpm
+ssh -t ssh://admin@localhost:8022 sudo -i ssh -t c1
+
+../../../../parse_doc.pl steps.tex > /Users/$USER/projects/ohpc-jetstream2/recipe.sh
+
 ```
 
 ### Warewulf Build
