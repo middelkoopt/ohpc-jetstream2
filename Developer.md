@@ -434,7 +434,7 @@ OBS
 https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
 ```
 
-snippets
+Running and debugging
 ```bash
 ./delete.sh && (cd ./qemu && ./new-image.sh rocky 10) && ./create.sh
 ssh -t ssh://admin@localhost:8022 sudo -i
@@ -443,6 +443,19 @@ ssh -t ssh://admin@localhost:8022 sudo -i ssh -t c1
 
 ../../../../parse_doc.pl steps.tex > /Users/$USER/projects/ohpc-jetstream2/recipe.sh
 
+wwctl profile delete nodes -y
+wwctl overlay delete nodeconfig -f
+wwctl image delete rocky-10 -y
+```
+
+OpenHPC build of Warewulf (lima)
+```bash
+lima sudo dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
+lima sudo rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
+lima sudo ./tests/ci/prepare-ci-environment.sh --pre-release
+
+lima sudo ./tests/ci/run_build.py $USER ./components/admin/docs/SPECS/docs.spec
+lima sudo ./tests/ci/run_build.py $USER ./components/provisioning/warewulf/SPECS/warewulf.spec
 ```
 
 ### Warewulf Build
@@ -458,14 +471,6 @@ make spec
 sudo dnf build-dep -y warewulf.spec
 make rpm
 (cd rpmbuild/RPMS && ln -sf aarch64/warewulf-*.rpm warewulf.rpm )
-```
-
-```bash
-python3 -m http.server -d rpmbuild/RPMS/ 8080
-```
-
-```
-http://192.168.105.1:8080/warewulf.rpm
 ```
 
 Test build

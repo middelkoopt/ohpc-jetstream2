@@ -10,6 +10,8 @@ internal_netmask=255.255.0.0
 internal_network=10.5.0.0
 ipv4_gateway=10.5.0.1
 dns_servers=8.8.8.8
+dhcp_start=10.5.1.1
+dhcp_end=10.5.1.254
 
 ## Compute node configuration
 eth_provision=enp0s1
@@ -52,9 +54,10 @@ dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Fac
 rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
 
 # 3.1 Enable OpenHPC repository (not in recipe.sh)
-ARCH=$(uname -m)
 ## FIXME: unreleased
+# ARCH=$(uname -m)
 # dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${ARCH}/ohpc-release-4-0.el10.${ARCH}.rpm
 
-## Prep node 
-nmcli device disconnect $sms_eth_internal || :
+# Prep head
+## FIXME: is this required by the test env anymore? (bringing up the device in the recipe))
+# nmcli device disconnect $sms_eth_internal || :
