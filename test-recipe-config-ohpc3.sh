@@ -5,11 +5,13 @@
 ntp_server=pool.ntp.org
 sms_name=$(hostname -f)
 sms_ip=10.5.0.8
-sms_eth_internal=eth1
+sms_eth_internal=enp0s2
 internal_netmask=255.255.0.0
 internal_network=10.5.0.0
 ipv4_gateway=10.5.0.1
 dns_servers=8.8.8.8
+dhcp_start=10.5.1.1
+dhcp_end=10.5.1.254
 
 ## Compute node configuration
 eth_provision=eth0
@@ -49,6 +51,7 @@ echo ${c_mac[@]}
 ## Setup OpenHPC Repo
 # Local: Enable development repo (3.4)
 dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC3:/3.4:/Factory/EL_9/
+rpm --import http://obs.openhpc.community:82/OpenHPC3:/3.4:/Factory/EL_9/repodata/repomd.xml.key
 
 # 3.1 Enable OpenHPC repository (not in recipe.sh)
 ARCH=$(uname -m)
