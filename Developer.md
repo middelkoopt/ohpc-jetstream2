@@ -473,6 +473,10 @@ make rpm
 (cd rpmbuild/RPMS && ln -sf aarch64/warewulf-*.rpm warewulf.rpm )
 ```
 
+```bash
+make clean && make warewulf.spec dist && mock -r rocky+epel-9-$(arch) --rebuild --spec=warewulf.spec --sources=.
+```
+
 Test build
 ```bash
 # https://github.com/middelkoopt/warewulf/releases/download/v4.6.4/warewulf-4.6.4-1.el10.aarch64.rpm
@@ -490,11 +494,15 @@ docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/midd
 ```
 
 ### Notes
-* Install dnsmasq for EL >= 10
-* Do not install tftpd for EL >=10
-* For EL >= 10, make tftp and dhcp default to dnsmasq. Remove dsa as a ssh alogrithm
-* Strip path from tftp files for dnsmasq template just as tftp.go code does
-
+ * Consider moving tftpboot to `/srv/tftpboot` from `/var/lib/tftpboot`
+   * Create `/srv/tftpboot` in `warewulf.spec`? (currently make symlink) 
+   * Selinux attributes on `/var/lib/tftpboot`, keep in recipe or add in `warewulf.spec` or other location.
+ * Add creation of `/etc/systemd/system-preset` to ohpc-base-compute?
+   * Needed now to enable services?  Is this the proper method?
+ * `$dhcp_start` and `$dhcp_end` are now needed for dnsmasq to set DHCP range
+ * Is it still necessary to bring up the internal interface?
+   * `ip link set dev ${sms_eth_internal} up`
+ * Is `disable --now firewalld` still needed?
 
 ## Delete
 
