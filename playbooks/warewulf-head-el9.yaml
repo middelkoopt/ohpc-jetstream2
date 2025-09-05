@@ -91,7 +91,7 @@
         make spec
         dnf build-dep -y warewulf.spec
         make rpm
-        dnf install -y /root/rpmbuild/RPMS/aarch64/warewulf-*-1.el*.*.rpm
+        dnf install -y /root/rpmbuild/RPMS/{{ ansible_architecture }}/warewulf-*-1.el*.{{ ansible_architecture }}.rpm
         {% else %}
         make clean
         make config \
