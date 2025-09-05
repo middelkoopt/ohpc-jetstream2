@@ -62,6 +62,7 @@
         name:
           - unzip
           - golang
+          - rpm-build
       when:
         - warewulf_build
 
@@ -112,6 +113,12 @@
         git checkout -B $(basename "${WWVERSION}") ${WWVERSION}
 
         ## Build Warewulf
+        {% if warewulf_build_rpm | bool %}
+        make spec
+        dnf build-dep -y warewulf.spec
+        make rpm
+        dnf install -y /root/rpmbuild/RPMS/aarch64/warewulf-*-1.el*.*.rpm
+        {% else %}
         make clean
         make config \
           PREFIX=/usr \
@@ -122,6 +129,7 @@
         make build
         make install
         wwctl completion bash > /etc/bash_completion.d/wwctl
+        {% endif %}
 
       args:
         creates: /usr/bin/wwctl
