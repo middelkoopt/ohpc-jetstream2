@@ -10,8 +10,6 @@ internal_netmask=255.255.0.0
 internal_network=10.5.0.0
 ipv4_gateway=10.5.0.1
 dns_servers=8.8.8.8
-dhcp_start=10.5.1.1
-dhcp_end=10.5.1.254
 
 ## Compute node configuration
 eth_provision=eth0

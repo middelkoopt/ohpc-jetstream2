@@ -73,11 +73,11 @@
           # - mtools
           # - initscripts-service # AlmaLinux
 
-    # - name: Install Warewulf (OHPC)
-    #   when: ohpc_warewulf
-    #   ansible.builtin.dnf:
-    #     name:
-    #       - warewulf-ohpc
+    - name: Install Warewulf (OHPC)
+      when: ohpc_warewulf
+      ansible.builtin.dnf:
+        name:
+          - warewulf-ohpc
 
     - name: Install Warewulf (Direct)
       when: not ohpc_warewulf
@@ -115,9 +115,6 @@
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
         sms_eth_internal=enp0s2
-
-        ## FIXME: Debugmode
-        dnf install -y /home/admin/warewulf-ohpc.rpm
 
         ## Cleanup failed setup
         wwctl profile delete nodes || true

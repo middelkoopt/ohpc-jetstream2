@@ -443,6 +443,7 @@ ssh -t ssh://admin@localhost:8022 sudo -i ssh -t c1
 
 ../../../../parse_doc.pl steps.tex > /Users/$USER/projects/ohpc-jetstream2/recipe.sh
 
+wwctl node delete c1 -y
 wwctl profile delete nodes -y
 wwctl overlay delete nodeconfig -f
 wwctl image delete rocky-10 -y
