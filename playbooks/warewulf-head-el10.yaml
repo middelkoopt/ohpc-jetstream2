@@ -21,21 +21,6 @@
         state: latest
         update_only: true
 
-    - name: Add Fedora 40 updates for yq (disabled)
-      ansible.builtin.yum_repository:
-        name: fedora-updates-40
-        description: Fedora 40
-        # baseurl: https://download.fedoraproject.org/pub/fedora/linux/updates/40/Everything/$basearch/
-        metalink: https://mirrors.fedoraproject.org/metalink?repo=updates-released-f40&arch=$basearch
-        enabled: false
-        gpgcheck: false
-
-    - name: Install yq from Fedora 40 repository
-      ansible.builtin.dnf:
-        name: yq
-        state: present
-        enablerepo: fedora-updates-40
-
     - name: Install base packages
       ansible.builtin.dnf:
         allowerasing: true
@@ -46,6 +31,13 @@
           - jq
           - bash-completion
           # - initscripts-service # AlmaLinux
+
+    - name: Install yq
+      ansible.builtin.dnf:
+        allowerasing: true
+        disable_gpg_check: true
+        name:
+          - https://kojipkgs.fedoraproject.org//packages/yq/4.47.1/2.el10_0/{{ ansible_architecture }}/yq-4.47.1-2.el10_0.{{ ansible_architecture }}.rpm
 
     - name: Install packages
       ansible.builtin.dnf:
@@ -151,7 +143,6 @@
         dns_servers=8.8.8.8
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
-        sms_eth_internal=enp0s2
 
         ## Configure warewulf.conf
         yq -i /etc/warewulf/warewulf.conf --from-file /dev/stdin <<EOF
@@ -176,6 +167,7 @@
         wwctl profile add nodes --profile=default --comment="Nodes profile"
 
         ## Configure dnsmasq
+        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} |jq -r '.[].ifname')
         echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
 
         ## Start Warewulf
