@@ -493,6 +493,16 @@ for OS in 8 9 10 ; do
 done
 docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/middelkoopt/warewulf/releases/download/v${VERSION}/warewulf-${VERSION}-1.suse.lp155.${ARCH}.rpm
 ```
+### IPv6
+
+```bash
+wwctl overlay edit host /etc/dnsmasq.d/ww4-hosts.conf.ww
+# dhcp-range=fd00:5::8,64,5m
+yq -i '.ipaddr6="fd00:5::8/64"' /etc/warewulf/warewulf.conf
+wwctl node set -y --ipaddr6 fd00:5::1:1 c1
+wwctl configure --all
+wwctl overlay build
+```
 
 ### Notes
  * Consider moving tftpboot to `/srv/tftpboot` from `/var/lib/tftpboot`
@@ -510,7 +520,9 @@ docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/midd
 Delete warewulf configuration
 ```bash
 wwctl node delete c[1-4] --yes
+wwctl profile delete nodes --yes
 wwctl image delete nodeimage --yes
+userdel -r test
 ```
 
 ## Debug Notes
