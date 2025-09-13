@@ -21,8 +21,8 @@
       ansible.builtin.command: /usr/bin/needs-restarting -r
       register: needs_reboot
       changed_when: false
-      failed_when: needs_reboot.rc == 1
+      failed_when: false
 
     - name: Reboot system
       ansible.builtin.reboot:
-      when: needs_reboot.rc
+      when: needs_reboot.rc == 1
