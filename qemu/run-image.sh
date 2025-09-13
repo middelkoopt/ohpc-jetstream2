@@ -106,7 +106,8 @@ else
         -drive if=virtio,file=${IMAGE_NAME}.qcow2,format=qcow2 \
         -device virtio-net-pci,netdev=net0,mac=52:54:00:05:01:${IMAGE_ID} \
         -netdev ${QEMU_NET},id=net0 \
+        -fw_cfg name=opt/org.tianocore/IPv4PXESupport,string=y \
+        -fw_cfg name=opt/org.tianocore/IPv6PXESupport,string=y \
+        -qmp unix:/$PWD/${IMAGE_NAME}.sock,server,nowait \
         -nographic
-        # -fw_cfg name=opt/org.tianocore/IPv4PXESupport,string=n \
-        # -fw_cfg name=opt/org.tianocore/IPv6PXESupport,string=y \
 fi

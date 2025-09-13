@@ -12,10 +12,16 @@ while ! ssh ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT hostname ; do echo . ; sleep 
 
 ansible --verbose all -m ping
 
+echo "--- run playbooks"
 ansible-playbook -v playbooks/system-el.yaml
 ansible-playbook -v playbooks/warewulf-head-${VERSION}.yaml
 ansible-playbook -v playbooks/image-${VERSION}.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
-echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT
+echo "--- reset nodes"
+if [ -x $OS_NAME/reset.sh ] ; then
+  ( cd $OS_NAME && ./reset.sh )
+fi
+
 echo '--- done'
+echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT
