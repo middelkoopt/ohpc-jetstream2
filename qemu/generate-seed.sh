@@ -19,6 +19,7 @@ users:
     plain_text_passwd: "admin"
     lock_passwd: false
     groups: sudo
+    shell: /bin/bash
     sudo: "ALL=(ALL) NOPASSWD:ALL"
     ssh_authorized_keys:
       - $(cat ./id_rsa.pub)
@@ -28,6 +29,11 @@ cat > ./cloud-init/network-config << EOF
 network:
   version: 2
   ethernets:
+    eth0:
+      match:
+        macaddress: "52:54:00:00:02:0f"
+      dhcp4: true
+      dhcp6: true
     eth1:
       match:
         macaddress: "52:54:00:05:00:08"

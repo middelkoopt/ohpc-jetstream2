@@ -10,14 +10,14 @@
           - git
           - curl
           - jq
+          - yq # python yq package
           - bash-completion
 
     - name: Install cluster packages
       ansible.builtin.apt:
         name:
           - chrony
-          - isc-dhcp-server
-          - tftpd-hpa
+          - dnsmasq
           - ipxe
           - nfs-kernel-server
           - slurmd
@@ -28,7 +28,9 @@
       ansible.builtin.apt:
         name:
           - unzip
+          - make
           - golang
+          - libgpgme-dev
       when:
         - warewulf_build
 
@@ -83,6 +85,7 @@
 
     - name: Setup the head node
       # noqa: command-instead-of-module
+      # noqa: risky-shell-pipe # false positive, no pipes used
       ansible.builtin.shell: |-
         set -e -x
 
@@ -96,34 +99,45 @@
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
 
+        ## Export variables for yq env
+        export sms_ip internal_netmask internal_network dhcp_start dhcp_end
+
         ## Configure warewulf.conf
-        sed -i "s/^ipaddr:.*/ipaddr: ${sms_ip}/" /etc/warewulf/warewulf.conf
-        sed -i "s/^netmask:.*/netmask: ${internal_netmask}/" /etc/warewulf/warewulf.conf
-        sed -i "s/^network:.*/network: ${internal_network}/" /etc/warewulf/warewulf.conf
-        sed -i "s/template: default/template: static/" /etc/warewulf/warewulf.conf
-        sed -i "s/range start:.*/range start: ${dhcp_start}/" /etc/warewulf/warewulf.conf
-        sed -i "s/range end:.*/range end: ${dhcp_end}/" /etc/warewulf/warewulf.conf
-        sed -i "/- quiet/d" /etc/warewulf/nodes.conf
+        yq -iY '.ipaddr = env.sms_ip' /etc/warewulf/warewulf.conf
+        yq -iY '.netmask = env.internal_netmask' /etc/warewulf/warewulf.conf
+        yq -iY '.network = env.internal_network' /etc/warewulf/warewulf.conf
+        yq -iY '.dhcp."range start" = env.dhcp_start' /etc/warewulf/warewulf.conf
+        yq -iY '.dhcp."range end" = env.dhcp_end' /etc/warewulf/warewulf.conf
+        yq -iY '.dhcp."systemd name" = "dnsmasq"' /etc/warewulf/warewulf.conf
+        yq -iY '.tftp."systemd name" = "dnsmasq"' /etc/warewulf/warewulf.conf
+        yq -iY 'del(.ssh."key types"[] | select(. == "dsa"))' /etc/warewulf/warewulf.conf
+
+        ## Configure nodes.conf
+        yq -iY 'del(.nodeprofiles.default.kernel.args[] | select(. == "quiet"))' /etc/warewulf/nodes.conf
 
         ## Debian/Ubuntu changes
-        sed -i "s/systemd name: dhcpd/systemd name: isc-dhcp-server/" /etc/warewulf/warewulf.conf
-        sed -i "s:/usr/share/ipxe:/usr/lib/ipxe:" /etc/warewulf/warewulf.conf
-        sed -i "\:arm64-efi/snponly.efi:d" /etc/warewulf/warewulf.conf
-        sed -i "s:ipxe-snponly-x86_64.efi:snponly.efi:" /etc/warewulf/warewulf.conf
-        sed -i "s/systemd name: tftp$/systemd name: tftpd-hpa/" /etc/warewulf/warewulf.conf
-        sed -i "s:/var/lib/tftpboot/:/srv/tftp/:" /etc/warewulf/warewulf.conf
-        sed -i "s/systemd name: rsyncd$/systemd name: rsync/" /etc/warewulf/warewulf.conf
-        touch /etc/rsyncd.conf
+        yq -iY '.paths.ipxesource = "/usr/lib/ipxe"' /etc/warewulf/warewulf.conf
+        yq -iY '.tftp.ipxe."00:0B" = "ipxe-arm64.efi"' /etc/warewulf/warewulf.conf
+        yq -iY '.tftp.ipxe."00:07" = "ipxe-amd64.efi"' /etc/warewulf/warewulf.conf
+        yq -iY '.tftp.ipxe."00:09" = "ipxe-amd64.efi"' /etc/warewulf/warewulf.conf
 
         ## Configure profiles and overlays
         wwctl profile delete --yes nodes || /bin/true
         wwctl profile add nodes --profile=default --comment="Nodes profile"
+
+        ## Configure dnsmasq
+        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')
+        echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
+        echo "port=0" > /etc/dnsmasq.d/ww4-disable-dns.conf
 
         ## Start Warewulf
         systemctl enable --now warewulfd
         wwctl configure --all
         bash /etc/profile.d/ssh_setup.sh # configure ssh
         systemctl status warewulfd
+
+        ## Configure warewulf nodes profile for network
+        wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
 
         ## Munge
         if [ ! -r /etc/munge/munge.key ] ; then

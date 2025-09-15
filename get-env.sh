@@ -5,6 +5,11 @@ if [[ -z "${OS_NAME}" ]] ; then
   exit 1
 fi
 
+if [[ $(tofu -chdir=${OS_NAME} output --json) == "{}" ]] ; then
+  echo "no terraform state"
+  exit 1
+fi
+
 OHPC_IP4=$(tofu -chdir=${OS_NAME} output -raw ohpc_head_ipv4)
 OHPC_IP6=$(tofu -chdir=${OS_NAME} output -raw ohpc_head_ipv6)
 OHPC_DNS=$(tofu -chdir=${OS_NAME} output -raw ohpc_head_dns)

@@ -20,7 +20,7 @@
         wwctl image delete nodeimage --yes || /bin/true
 
         ## Import node image from container
-        wwctl image import $container nodeimage --syncuser
+        wwctl image import ${container} nodeimage --syncuser
 
         ## Configure profile
         wwctl profile set --yes nodes --image=nodeimage

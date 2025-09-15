@@ -149,7 +149,6 @@
           .ipaddr = "${sms_ip}" |
           .netmask = "${internal_netmask}" |
           .network = "${internal_network}" |
-          .dhcp["template"] = "static" |
           .dhcp["range start"] = "${dhcp_start}" |
           .dhcp["range end"] = "${dhcp_end}" |
           .dhcp["systemd name"] = "dnsmasq" |
@@ -167,7 +166,7 @@
         wwctl profile add nodes --profile=default --comment="Nodes profile"
 
         ## Configure dnsmasq
-        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} |jq -r '.[].ifname')
+        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')
         echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
 
         ## Start Warewulf

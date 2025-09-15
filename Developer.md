@@ -520,7 +520,7 @@ wwctl overlay build
 Delete warewulf configuration
 ```bash
 wwctl node delete c[1-4] --yes
-wwctl profile delete nodes --yes
+wwctl profile set nodes --yes --image=UNDEF
 wwctl image delete nodeimage --yes
 userdel -r test
 ```

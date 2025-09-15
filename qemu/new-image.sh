@@ -30,6 +30,26 @@ case "$DIST" in
     almalinux|alma)
         IMAGE_URL="https://repo.almalinux.org/almalinux/${VERSION}/cloud/${ARCH}/images/AlmaLinux-${VERSION}-GenericCloud-latest.${ARCH}.qcow2"
         ;;
+    debian)
+        if [[ "$ARCH" == "aarch64" ]] ; then
+            ARCH="arm64"
+        fi
+        case "$VERSION" in
+            12|bookworm)
+                CODENAME="bookworm"
+                VERSION="12"
+                ;;
+            13|trixie)
+                CODENAME="trixie"
+                VERSION="13"
+                ;;
+            *)
+                echo "Unsupported Debian version: $VERSION"
+                exit 1
+                ;;
+        esac
+        IMAGE_URL="https://cloud.debian.org/images/cloud/${CODENAME}/latest/debian-${VERSION}-generic-${ARCH}.qcow2"
+        ;;
     *)
         echo "Unsupported DIST: $DIST"
         exit 1

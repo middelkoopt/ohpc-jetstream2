@@ -1,0 +1,76 @@
+- name: Build Debian Image
+  hosts: head
+  become: true
+  tasks:
+    - name: Generate compute node image
+      environment:
+        container: "{{ warewulf_container }}"
+      args:
+        creates: /var/lib/warewulf/provision/images/nodeimage.img.gz
+      register: image_result
+      ansible.builtin.shell: |-
+        set -e -x
+
+        ## Config
+        sms_ip=10.5.0.8
+        : ${container:=docker://registry.docker.com/library/debian:13}
+
+        ## Remove old image
+        wwctl profile set nodes --yes --image=UNDEF || /bin/true
+        wwctl image delete nodeimage --yes || /bin/true
+
+        ## Import node image from container
+        wwctl image import ${container} nodeimage --syncuser
+
+        ## Configure profile
+        wwctl profile set --yes nodes --image=nodeimage
+        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0'
+        wwctl profile set --yes nodes --netname=default --netdev=eth0
+
+        wwctl image exec nodeimage /bin/bash << EXEC
+        # --------------------------------------------------------------------
+        set -e -x
+        set -o pipefail
+        export LANG=C.UTF-8
+        export DEBIAN_FRONTEND=noninteractive
+
+        ## Debug
+        passwd -d root # allow serial console login
+
+        ## Update image
+        apt-get update
+        apt-get install --yes apt-utils
+        apt-get dist-upgrade --yes --purge
+
+        ## Install base packages
+        apt-get install --yes --no-install-recommends curl jq zstd cpio procps iproute2 busybox-static
+        apt-get install --yes --no-install-recommends init udev dbus polkitd
+        apt-get install --yes --no-install-recommends systemd-timesyncd systemd-resolved ifupdown
+        apt-get install --yes --no-install-recommends openssh-server python3
+        apt-get install --yes less vim
+
+        ## Install kernel
+        apt-get install --yes --no-install-recommends linux-image-generic
+        rm -vf /initrd.img* /vmlinuz*
+
+        ## Munge
+        install -dv --mode=700 --owner=munge --group=munge /etc/munge
+        touch /etc/munge/munge.key ## blank file will be replace with the overlay (bypass image install error)
+        apt-get install --yes munge
+        systemctl enable munge
+
+        ## Slurm
+        apt-get install --yes slurmd
+        touch /etc/slurm/slurm.conf
+        echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/default/slurmd
+        systemctl enable slurmd
+
+        ## Lmod
+        apt-get install --yes lmod
+
+        ## Cleanup
+        rm -vf /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
+        apt-get clean
+
+        # --------------------------------------------------------------------
+        EXEC

@@ -5,8 +5,11 @@
 
     - name: Upgrade all packages
       ansible.builtin.apt:
-        name: '*'
-        state: latest # noqa package-latest
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+        purge: true
+        clean: true
 
     - name: Prep base systems
       ansible.builtin.apt:
@@ -17,6 +20,8 @@
       ansible.builtin.stat:
         path: /var/run/reboot-required
       register: needs_reboot
+      changed_when: false
+      failed_when: false
 
     - name: Reboot system
       ansible.builtin.reboot:

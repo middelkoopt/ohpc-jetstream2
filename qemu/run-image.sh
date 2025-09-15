@@ -87,7 +87,7 @@ if [ $IMAGE_NAME = "head" ] ; then
         -bios $QEMU_EFI \
         -drive if=virtio,file=${IMAGE_NAME}.qcow2,format=qcow2 \
         -drive if=virtio,file=seed.img,format=raw,media=cdrom \
-        -nic user,model=virtio-net-pci,hostfwd=tcp::8022-:22 \
+        -nic user,model=virtio-net-pci,mac=52:54:00:00:02:0f,hostfwd=tcp::8022-:22 \
         -device virtio-net-pci,netdev=net1,mac=52:54:00:05:00:08 \
         -netdev ${QEMU_NET},id=net1 \
         -nographic
