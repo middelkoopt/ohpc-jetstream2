@@ -19,10 +19,5 @@ ansible-playbook -v playbooks/warewulf-head-${VERSION}.yaml
 ansible-playbook -v playbooks/image-${VERSION}.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
-echo "--- reset nodes"
-if [ -x $OS_NAME/reset.sh ] ; then
-  ( cd $OS_NAME && ./reset.sh )
-fi
-
 echo '--- done'
 echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT

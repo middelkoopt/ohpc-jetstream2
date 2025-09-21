@@ -24,7 +24,7 @@
 
         ## Configure profile
         wwctl profile set --yes nodes --image=nodeimage
-        wwctl profile set --yes nodes --kernelargs='console=tty0,"console=ttyS0,115200",systemd.log_color=0,rd.shell'
+        wwctl profile set --yes nodes --kernelargs='"console=ttyS0,115200",systemd.log_color=0,rd.shell'
         wwctl profile set --yes nodes --netname=default --netdev=eth0
 
         ## Configure image

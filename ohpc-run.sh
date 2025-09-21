@@ -10,9 +10,10 @@ while ! ssh ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT hostname ; do echo . ; sleep 
 
 ansible --verbose all -m ping
 
+echo "--- run playbooks"
 ansible-playbook -v playbooks/system-el.yaml
 ansible-playbook -v playbooks/ohpc-head-4.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
-echo $OHPC_USER@$OHPC_HEAD
 echo '--- done'
+echo ssh://$OHPC_USER@$OHPC_HEAD:$OHPC_PORT
