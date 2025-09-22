@@ -5,11 +5,13 @@
 ntp_server=pool.ntp.org
 sms_name=$(hostname -f)
 sms_ip=10.5.0.8
-sms_eth_internal=enp0s2
 internal_netmask=255.255.0.0
 internal_network=10.5.0.0
 ipv4_gateway=10.5.0.1
 dns_servers=8.8.8.8
+
+## Internal network
+sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')
 
 ## Compute node configuration
 eth_provision=enp0s1
