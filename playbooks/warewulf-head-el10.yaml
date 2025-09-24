@@ -29,15 +29,9 @@
           - git
           - curl
           - jq
+          - yq
           - bash-completion
-          # - initscripts-service # AlmaLinux
-
-    - name: Install yq
-      ansible.builtin.dnf:
-        allowerasing: true
-        disable_gpg_check: true
-        name:
-          - https://kojipkgs.fedoraproject.org//packages/yq/4.47.1/2.el10_0/{{ ansible_architecture }}/yq-4.47.1-2.el10_0.{{ ansible_architecture }}.rpm
+          - initscripts-service # AlmaLinux
 
     - name: Install packages
       ansible.builtin.dnf:
@@ -150,10 +144,7 @@
           .netmask = "${internal_netmask}" |
           .network = "${internal_network}" |
           .dhcp["range start"] = "${dhcp_start}" |
-          .dhcp["range end"] = "${dhcp_end}" |
-          .dhcp["systemd name"] = "dnsmasq" |
-          .tftp["systemd name"] = "dnsmasq" |
-          .ssh["key types"] -= ["dsa"]
+          .dhcp["range end"] = "${dhcp_end}"
         EOF
 
         ## Configure nodes.conf

@@ -25,7 +25,7 @@
         ## FIXME: Remove extra package (unbound) with dynamic UID (added by Warewulf?)
         wwctl image exec nodeimage --syncuser /bin/bash << EXEC
         dnf remove -y unbound-libs
-        userdel unbound
+        userdel unbound || /bin/true
         EXEC
 
         ## Configure profile
@@ -75,22 +75,3 @@
 
         # --------------------------------------------------------------------
         EXEC
-
-    - name: Configure Dracut
-      when:
-        - warewulf_dracut
-        - image_result is changed
-      environment:
-        dracut:
-          "https://github.com/{{ warewulf_rpm_account }}/warewulf/releases/download/\
-          {{ 'nightly' if warewulf_rpm_nightly else 'v' + warewulf_rpm_version }}/\
-          warewulf-dracut-{{ warewulf_rpm_version }}-1.el9.noarch.rpm"
-      args:
-        creates: /var/lib/warewulf/chroots/rocky-9/rootfs/boot/initramfs-*.img
-      ansible.builtin.shell: |-
-        set -e -x
-
-        wwctl profile set --yes nodes --tagdel IPXEMenuEntry
-        wwctl image exec nodeimage --build=false -- /usr/bin/dnf install -y ${dracut}
-        wwctl image exec nodeimage -- /usr/bin/dracut --force --no-hostonly --add wwinit --regenerate-all
-        wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut

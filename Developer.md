@@ -109,8 +109,6 @@ ibnodes
 
 Docs build dep (Rocky/Lima)
 ```bash
-lima sudo dnf install -y git epel-release
-lima sudo dnf install -y --enablerepo=devel latexmk
 lima sudo dnf install -y make gawk latexmk texlive-collection-latexrecommended texlive-multirow texlive-tcolorbox
 lima make
 ```
@@ -222,12 +220,6 @@ sudo ./tests/ci/run_build.py $USER ./components/admin/yq/SPECS/yq.spec
 
 ```
 
-Copy over to VM
-```bash
-cp -v ~/rpmbuild/RPMS/$(uname -m)/warewulf-ohpc-*.rpm
-scp ./warewulf-ohpc-*.rpm scp://admin@localhost:8022/
-```
-
 ## Warewulf OpenHPC Upgrade
 
 * https://warewulf.org/docs/v4.6.x/server/upgrade.html
@@ -276,23 +268,6 @@ if torch.cuda.is_available():
     z = x + y  # Perform an operation on GPU
     print("GPU operation successful!")
     print(z)  # Print result to verify
-```
-
-## Warewulf Build RPM
-
-```bash
-dnf config-manager --set-enabled crb
-dnf install -y rpm-build
-
-cd /usr/src/warewulf
-make spec
-make dist
-install -dpv ~/rpmbuild/SOURCES/
-install -Dv ./warewulf-*.tar.gz ~/rpmbuild/SOURCES/
-dnf build-dep -y ./warewulf.spec
-
-\rm -rf ~/rpmbuild/RPMS
-rpmbuild -bb ./warewulf.spec
 ```
 
 ## Diskless w/ Dracut
@@ -372,11 +347,8 @@ Debug Notes
 
 Provision
 ```bash
-# https://koji.fedoraproject.org/koji/builds?state=1&type=rpm&tagID=f40-updates&packageID=40030
-dnf install -y https://kojipkgs.fedoraproject.org/packages/yq/4.43.1/5.fc40/aarch64/yq-4.43.1-5.fc40.aarch64.rpm
-
 systemctl disable --now dhcpd.service
-dnf install -y dnsmasq
+dnf install -y dnsmasq yq
 echo "interface=eth1" > /etc/dnsmasq.d/ww4-interface.conf
 
 yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
@@ -436,12 +408,9 @@ https://obs.openhpc.community/project/show/OpenHPC4:4.0:Factory
 
 Running and debugging
 ```bash
-./delete.sh && (cd ./qemu && ./new-image.sh rocky 10) && ./create.sh
+./delete.sh ; (cd ./qemu && ./new-image.sh rocky 10) && ./create.sh
 ssh -t ssh://admin@localhost:8022 sudo -i
-dnf install -y https://kojipkgs.fedoraproject.org//packages/yq/4.47.1/2.el9/aarch64/yq-4.47.1-2.el9.$(uname -m).rpm
 ssh -t ssh://admin@localhost:8022 sudo -i ssh -t c1
-
-../../../../parse_doc.pl steps.tex > /Users/$USER/projects/ohpc-jetstream2/recipe.sh
 
 wwctl node delete c1 -y
 wwctl profile delete nodes -y
@@ -451,8 +420,6 @@ wwctl image delete rocky-10 -y
 
 OpenHPC build of Warewulf (lima)
 ```bash
-lima sudo dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
-lima sudo rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
 lima sudo ./tests/ci/prepare-ci-environment.sh --pre-release
 
 lima sudo ./tests/ci/run_build.py $USER ./components/admin/docs/SPECS/docs.spec
@@ -465,14 +432,6 @@ Notes:
 * build: arm64-efi/snponly.efi is missing from /var/lib/tftpboot/warewulf
 * fix selinux attributes for /var/lib/tftpboot
 * Systemd files in overlay are absolute symlinks (issue or not?)
-
-```bash
-ln -sf $PWD /home/vscode/rpmbuild
-make spec
-sudo dnf build-dep -y warewulf.spec
-make rpm
-(cd rpmbuild/RPMS && ln -sf aarch64/warewulf-*.rpm warewulf.rpm )
-```
 
 ```bash
 make clean && make warewulf.spec dist && mock -r rocky+epel-9-$(arch) --rebuild --spec=warewulf.spec --sources=.
@@ -493,42 +452,8 @@ for OS in 8 9 10 ; do
 done
 docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/middelkoopt/warewulf/releases/download/v${VERSION}/warewulf-${VERSION}-1.suse.lp155.${ARCH}.rpm
 ```
-### IPv6
-
-```bash
-wwctl overlay edit host /etc/dnsmasq.d/ww4-hosts.conf.ww
-# dhcp-range=fd00:5::8,64,5m
-yq -i '.ipaddr6="fd00:5::8/64"' /etc/warewulf/warewulf.conf
-wwctl node set -y --ipaddr6 fd00:5::1:1 c1
-wwctl configure --all
-wwctl overlay build
-```
 
 ### Notes
  * Consider moving tftpboot to `/srv/tftpboot` from `/var/lib/tftpboot`
    * Create `/srv/tftpboot` in `warewulf.spec`? (currently make symlink) 
    * Selinux attributes on `/var/lib/tftpboot`, keep in recipe or add in `warewulf.spec` or other location.
- * Add creation of `/etc/systemd/system-preset` to ohpc-base-compute?
-   * Needed now to enable services?  Is this the proper method?
- * `$dhcp_start` and `$dhcp_end` are now needed for dnsmasq to set DHCP range
- * Is it still necessary to bring up the internal interface?
-   * `ip link set dev ${sms_eth_internal} up`
- * Is `disable --now firewalld` still needed?
-
-## Delete
-
-Delete warewulf configuration
-```bash
-wwctl node delete c[1-4] --yes
-wwctl profile set nodes --yes --image=UNDEF
-wwctl image delete nodeimage --yes
-userdel -r test
-```
-
-## Debug Notes
-
-OHPC slurm bug
-```latex
-% steps.tex@146
-% ohpc_command perl -pi -e "s|/var/log/|/var/log/slurm/|" /etc/slurm/slurm.conf
-```

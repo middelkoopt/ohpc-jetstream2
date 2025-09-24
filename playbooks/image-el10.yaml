@@ -49,10 +49,6 @@
         ## Debug
         passwd -d root # allow serial console login
 
-        ## FIXME: setup wwclient
-        install -vdp /etc/systemd/system-preset/
-        echo "enable wwclient.service" > /etc/systemd/system-preset/90-wwclient.preset
-
         ## Install compute node packages
         dnf install -y chrony
 

@@ -15,14 +15,15 @@ IMAGE_UUID=${IMAGE_UUID%\)*}
 
 echo "--- IMAGE: $IMAGE_BASE IMAGE_UUID: $IMAGE_UUID"
 . ./get-env.sh
+HEAD="$OHPC_USER@$OHPC_HEAD:$OHPC_PORT"
 
-echo "--- wait for head $OHPC_HEAD"
-while ! ssh $OHPC_USER@$OHPC_HEAD hostname ; do echo -n . ; sleep .2 ; done
+echo "--- wait for head $HEAD"
+while ! ssh ssh://$HEAD hostname ; do echo -n . ; sleep .2 ; done
 echo done
 
 echo "--- update"
-ssh $OHPC_USER@$OHPC_HEAD sudo dnf update -y
-ssh $OHPC_USER@$OHPC_HEAD sudo systemctl poweroff
+ssh ssh://$HEAD sudo dnf update -y
+ssh ssh://$HEAD sudo systemctl poweroff
 
 echo "--- stop vm"
 openstack server stop head

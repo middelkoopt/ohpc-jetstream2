@@ -40,6 +40,10 @@
         path: /etc/hosts
         line: "10.5.0.8    head.localdomain head"
 
+    - name: Add EPEL
+      ansible.builtin.dnf:
+        name: epel-release
+
     ## FIXME: unreleased
     # - name: Install OHPC release
     #   ansible.builtin.dnf:
@@ -62,16 +66,14 @@
 
     - name: Install OHPC base
       ansible.builtin.dnf:
-        ## FIXME: broken or can be removed
         name:
-          # - ohpc-base
+          - ohpc-base
           - ohpc-slurm-client
           - ohpc-slurm-server
-          # - hwloc-ohpc
           - chrony
           - jq
-          # - mtools
-          # - initscripts-service # AlmaLinux
+          - yq
+          - initscripts-service # AlmaLinux
 
     - name: Install Warewulf (OHPC)
       when: ohpc_warewulf
@@ -102,9 +104,13 @@
 
     - name: Setup the head node
       # noqa: command-instead-of-module
+      environment:
+        container: "{{ warewulf_container }}"
       ansible.builtin.shell: |-
         set -e -x
         set -o pipefail
+
+        : ${container:=docker://ghcr.io/warewulf/warewulf-rockylinux:10}
 
         sms_name=head
         sms_ip=10.5.0.8
@@ -114,32 +120,34 @@
         dns_servers=8.8.8.8
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
-        sms_eth_internal=enp0s2
 
         ## Cleanup failed setup
         wwctl profile delete nodes || true
-        wwctl image delete --yes rocky-10 || true
+        wwctl image delete --yes nodeimage || true
         userdel --remove auser || true
 
-        ## FIXME: yq
-        dnf install -y https://kojipkgs.fedoraproject.org/packages/yq/4.43.1/5.fc40/aarch64/yq-4.43.1-5.fc40.aarch64.rpm
-
         ## Configure warewulf.conf
+        ## FIXME: remove "systemd name" after OpenHPC Warewulf update
         yq e '
+          .warewulf["systemd name"] = "warewulfd" |
           .ipaddr = "'${sms_ip}'" |
           .netmask = "'${internal_netmask}'" |
           .network = "'${internal_network}'" |
-          .dhcp["template"] = "static" |
           .dhcp["range start"] = "'${dhcp_start}'" |
           .dhcp["range end"] = "'${dhcp_end}'"' \
           -i /etc/warewulf/warewulf.conf
 
+        ## FIXME: Configure dnsmasq
+        dnf install -y policycoreutils-python-utils
+        install -dpv /var/lib/tftpboot
+        semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
+        restorecon -R -v /var/lib/tftpboot
+        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')
+        echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
+
         ## Warewulf
         wwctl configure --all
         bash /etc/profile.d/ssh_setup.sh # setup ssh
-
-        ## Configure dnsmasq
-        echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
 
         ## Slurm
         cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf
@@ -155,7 +163,7 @@
         systemctl enable --now slurmctld
 
         ## Import node image
-        wwctl image import docker://ghcr.io/warewulf/warewulf-rockylinux:10 rocky-10 --syncuser
+        wwctl image import ${container} nodeimage --syncuser
 
         ## Create "nodes" profile and inherit settings from the "default" profile
         wwctl profile add nodes --profile=default --comment="Nodes profile"
@@ -187,7 +195,7 @@
         arch=$(uname -m)
 
         ## Configure image
-        wwctl image exec rocky-10 /bin/bash << EXEC
+        wwctl image exec nodeimage /bin/bash << EXEC
         ## --------------------------------------------------------------------
         set -e -x
         export LANG=C.UTF-8
@@ -209,19 +217,16 @@
         ## FIXME: not yet released
         # dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${arch}/ohpc-release-4-0.el10.${arch}.rpm
 
-        # enabled services go here
-        install -dvp /etc/systemd/system-preset
-
         dnf install -y ohpc-base-compute hwloc-ohpc
         dnf install -y ohpc-slurm-client
-
-        echo "enable munge.service" > /etc/systemd/system-preset/90-munge.preset
 
         dnf install -y chrony
         echo "server ${sms_ip} iburst" >> /etc/chrony.conf
 
+        systemctl enable munge.service
+
         echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
-        echo "enable slurmd.service" > /etc/systemd/system-preset/90-slurmd.preset
+        systemctl enable slurmd.service
 
         dnf install -y lmod-ohpc
 
@@ -240,7 +245,7 @@
         wwctl profile set --yes nodes --system-overlays munge --runtime-overlays syncuser
 
         ## Set as default image and set kernel args
-        wwctl profile set --yes nodes --image rocky-10
+        wwctl profile set --yes nodes --image nodeimage
         wwctl profile set --yes nodes --kernelargs='"console=ttyS0,115200",systemd.log_color=0,crashkernel=no,vga=791,rd.shell'
 
         touch /root/configure-node-image.stamp

@@ -12,7 +12,7 @@ ansible --verbose all -m ping
 
 echo "--- run playbooks"
 ansible-playbook -v playbooks/system-el.yaml
-ansible-playbook -v playbooks/ohpc-head-4.yaml
+ansible-playbook -v playbooks/ohpc-head.yaml
 ansible-playbook -v playbooks/nodes.yaml
 
 echo '--- done'
