@@ -63,7 +63,7 @@
       ansible.builtin.dnf:
         name:
           - "https://github.com/{{ warewulf_account }}/warewulf/releases/download/\
-            v{{ warewulf_rpm_version }}/warewulf-{{ warewulf_rpm_version }}-1.el9.{{ ansible_architecture }}.rpm"
+            v{{ warewulf_version }}/warewulf-{{ warewulf_version }}-1.el9.{{ ansible_architecture }}.rpm"
         disable_gpg_check: true
       when:
         - not warewulf_build
