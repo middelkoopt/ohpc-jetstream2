@@ -325,6 +325,12 @@ rsync -av /usr/src/warewulf/dracut/modules.d/ $chroot/usr/lib/dracut/modules.d/ 
             type_guid: "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 ```
 
+```bash
+        wwctl profile set --yes nodes \
+          --diskname /dev/vda \
+          --partname EFI --partcreate --partnumber 1 --partsize=2 --parttype=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+```
+
 Debugging: `curl` some data
 ```bash
 mac=$(wwctl node list --json | jq -r '.c1."network devices".default.hwaddr')
@@ -457,3 +463,9 @@ docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/midd
  * Consider moving tftpboot to `/srv/tftpboot` from `/var/lib/tftpboot`
    * Create `/srv/tftpboot` in `warewulf.spec`? (currently make symlink) 
    * Selinux attributes on `/var/lib/tftpboot`, keep in recipe or add in `warewulf.spec` or other location.
+
+### Debug
+```
+stty cols 164 rows 56
+stty cols 135 rows 38
+```
