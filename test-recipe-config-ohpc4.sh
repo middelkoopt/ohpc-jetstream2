@@ -31,6 +31,7 @@ c_name[0]=c1
 c_name[1]=c2
 c_name[2]=c3
 c_name[3]=c4
+node_disk=/dev/vda
 
 ## Testing configuration
 enable_nvidia_gpu_driver=0

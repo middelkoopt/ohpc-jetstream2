@@ -270,10 +270,16 @@
         : ${node_disk:=/dev/vda}
         CHROOT=$(wwctl image show nodeimage)
 
+        ## Create UEFI partition
+        wwctl profile set --yes nodes \
+          --diskname ${node_disk} --diskwipe \
+          --partname EFI --partcreate --partnumber 1 --partsize=2 --parttype=C12A7328-F81F-11D2-BA4B-00A0C93EC93B \
+          --fsname EFI --fswipe --fsformat vfat --fspath /boot/efi
+
         ## Create the target "rootfs" partition and filesystem
         wwctl profile set --yes nodes \
           --diskname ${node_disk} --diskwipe \
-          --partname rootfs --partcreate --partnumber 1 \
+          --partname rootfs --partcreate --partnumber 2 \
           --fsname rootfs --fswipe --fsformat ext4 --fspath /
         wwctl profile set nodes --yes --root=/dev/disk/by-partlabel/rootfs
 
