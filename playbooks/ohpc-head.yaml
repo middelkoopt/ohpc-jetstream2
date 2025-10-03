@@ -270,6 +270,19 @@
         : ${node_disk:=/dev/vda}
         CHROOT=$(wwctl image show nodeimage)
 
+        ## Install Dracut in the image
+        wwctl image exec --build=false nodeimage -- /usr/bin/dnf install -y warewulf-ohpc-dracut ignition gdisk
+
+        ## Configure Dracut.  Note the leading and trailing spaces in the quotes for 'add_dracutmodules'.
+        echo 'hostonly="no"' > $CHROOT/etc/dracut.conf.d/wwinit.conf
+        echo 'add_dracutmodules+=" wwinit ignition "' >> $CHROOT/etc/dracut.conf.d/wwinit.conf
+
+        ## Create initramfs
+        wwctl image exec nodeimage -- /usr/bin/dracut --force --regenerate-all
+
+        ## Setup two-stage boot disks (Dracut)
+        wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut
+
         ## Create UEFI partition
         wwctl profile set --yes nodes \
           --diskname ${node_disk} --diskwipe \
@@ -281,17 +294,6 @@
           --diskname ${node_disk} --diskwipe \
           --partname rootfs --partcreate --partnumber 2 \
           --fsname rootfs --fswipe --fsformat ext4 --fspath /
-        wwctl profile set nodes --yes --root=/dev/disk/by-partlabel/rootfs
 
-        ## Install Dracut in the image
-        wwctl image exec --build=false nodeimage -- /usr/bin/dnf install -y warewulf-ohpc-dracut ignition gdisk
-
-        ## Configure Dracut.  Note the leading and trailing spaces in the quotes.
-        echo 'hostonly="no"' > $CHROOT/etc/dracut.conf.d/wwinit.conf
-        echo 'add_dracutmodules+=" wwinit ignition "' >> $CHROOT/etc/dracut.conf.d/wwinit.conf
-
-        ## Create initramfs
-        wwctl image exec nodeimage -- /usr/bin/dracut --force --regenerate-all
-
-        ## Enable Dracut boot
-        wwctl profile set --yes nodes --tagadd IPXEMenuEntry=dracut
+        # Enable two-stage boot (Dracut)
+        # wwctl profile set nodes --yes --root=/dev/disk/by-partlabel/rootfs
