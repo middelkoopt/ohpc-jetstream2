@@ -34,6 +34,7 @@ c_name[3]=c4
 
 ## Provision to disk configuration
 node_disk=/dev/vda
+enable_dracut=1
 enable_todisk=0
 
 ## Testing configuration
