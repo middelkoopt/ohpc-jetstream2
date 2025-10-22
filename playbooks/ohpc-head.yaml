@@ -44,11 +44,10 @@
       ansible.builtin.dnf:
         name: epel-release
 
-    ## FIXME: unreleased
-    # - name: Install OHPC release
-    #   ansible.builtin.dnf:
-    #     name: http://repos.openhpc.community/OpenHPC/4/EL_10/{{ ansible_architecture }}/ohpc-release-4-1.el10.{{ ansible_architecture }}.rpm
-    #     disable_gpg_check: true
+    - name: Install OHPC release
+      ansible.builtin.dnf:
+        name: http://repos.openhpc.community/OpenHPC/4/EL_10/{{ ansible_architecture }}/ohpc-release-4-1.el10.{{ ansible_architecture }}.rpm
+        disable_gpg_check: true
 
     - name: Install base packages
       ansible.builtin.dnf:
@@ -105,7 +104,7 @@
     - name: Setup the head node
       # noqa: command-instead-of-module
       environment:
-        container: "{{ warewulf_container }}"
+        container: "{{ ohpc_container }}"
       ansible.builtin.shell: |-
         set -e -x
         set -o pipefail
@@ -214,13 +213,12 @@
 
         passwd -d root # allow serial console login
 
+        dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${arch}/ohpc-release-4-1.el10.${arch}.rpm
+
         {% if ohpc_factory | default(false) %}
         dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
         rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
         {% endif %}
-
-        ## FIXME: not yet released
-        # dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${arch}/ohpc-release-4-0.el10.${arch}.rpm
 
         dnf install -y ohpc-base-compute hwloc-ohpc
         dnf install -y ohpc-slurm-client

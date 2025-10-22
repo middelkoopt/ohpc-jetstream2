@@ -97,8 +97,8 @@ dnf install -y spack-ohpc ohpc-gnu13-openmpi5-parallel-libs \
     ohpc-gnu13-python-libs ohpc-gnu13-runtimes
 
 dnf install -y infiniband-diags
-modprobe mlx4_ib 
-modprobe ib_umad 
+modprobe mlx4_ib
+modprobe ib_umad
 modprobe ib_ipoib
 ibstat
 ibnodes

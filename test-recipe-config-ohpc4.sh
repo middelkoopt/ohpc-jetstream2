@@ -55,14 +55,9 @@ echo ${c_mac[@]}
 
 ## Setup OpenHPC Repo
 # Local: Enable development repo (4.0)
-dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
-rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
+# dnf config-manager --add-repo http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/
+# rpm --import http://obs.openhpc.community:82/OpenHPC4:/4.0:/Factory/EL_10/repodata/repomd.xml.key
 
 # 3.1 Enable OpenHPC repository (not in recipe.sh)
-## FIXME: unreleased
-# ARCH=$(uname -m)
-# dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${ARCH}/ohpc-release-4-0.el10.${ARCH}.rpm
-
-# Prep head
-## FIXME: is this required by the test env anymore? (bringing up the device in the recipe))
-# nmcli device disconnect $sms_eth_internal || :
+ARCH=$(uname -m)
+dnf install -y http://repos.openhpc.community/OpenHPC/4/EL_10/${ARCH}/ohpc-release-4-1.el10.${ARCH}.rpm
