@@ -88,21 +88,21 @@
 
         ## Build Warewulf
         {% if warewulf_build_rpm | bool %}
-        make spec
-        dnf build-dep -y warewulf.spec
-        make rpm
-        dnf install -y /root/rpmbuild/RPMS/{{ ansible_architecture }}/warewulf-*-1.el*.{{ ansible_architecture }}.rpm
+          make spec
+          dnf build-dep -y warewulf.spec
+          make rpm
+          dnf install -y /root/rpmbuild/RPMS/{{ ansible_architecture }}/warewulf-*-1.el*.{{ ansible_architecture }}.rpm
         {% else %}
-        make clean
-        make config \
-          PREFIX=/usr \
-          SYSCONFDIR=/etc \
-          LOCALSTATEDIR=/var/lib \
-          SHAREDSTATEDIR=/var/lib \
-          TFTPDIR=/var/lib/tftpboot
-        make build
-        make install
-        wwctl completion bash > /etc/bash_completion.d/wwctl
+          make clean
+          make config \
+            PREFIX=/usr \
+            SYSCONFDIR=/etc \
+            LOCALSTATEDIR=/var/lib \
+            SHAREDSTATEDIR=/var/lib \
+            TFTPDIR=/var/lib/tftpboot
+          make build
+          make install
+          wwctl completion bash > /etc/bash_completion.d/wwctl
         {% endif %}
 
       args:

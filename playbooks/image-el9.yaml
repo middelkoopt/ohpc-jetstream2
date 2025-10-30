@@ -4,7 +4,7 @@
   tasks:
     - name: Generate compute node image
       environment:
-        container: "{{ warewulf_container }}"
+        container: "{{ warewulf_container | default(omit) }}"
       args:
         creates: /var/lib/warewulf/provision/images/nodeimage.img.gz
       register: image_result
