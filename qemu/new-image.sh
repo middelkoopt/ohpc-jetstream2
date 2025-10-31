@@ -31,9 +31,19 @@ case "$DIST" in
         IMAGE_URL="https://repo.almalinux.org/almalinux/${VERSION}/cloud/${ARCH}/images/AlmaLinux-${VERSION}-GenericCloud-latest.${ARCH}.qcow2"
         ;;
     debian)
-        if [[ "$ARCH" == "aarch64" ]] ; then
-            ARCH="arm64"
-        fi
+        case $ARCH in
+            aarch64|arm64)
+                ARCH="arm64"
+                ;;
+            x86_64|amd64)
+                ARCH="amd64"
+                ;;
+            *)
+                echo "Unsupported architecture: $ARCH"
+                exit 1
+                ;;
+        esac
+
         case "$VERSION" in
             12|bookworm)
                 CODENAME="bookworm"

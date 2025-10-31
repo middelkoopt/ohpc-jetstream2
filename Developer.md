@@ -459,6 +459,34 @@ done
 docker run -it --rm opensuse/leap:15.5 zypper install -y https://github.com/middelkoopt/warewulf/releases/download/v${VERSION}/warewulf-${VERSION}-1.suse.lp155.${ARCH}.rpm
 ```
 
+## Cross Arch
+
+```bash
+wwctl image import docker://ghcr.io/warewulf/warewulf-rockylinux@sha256:d4fad0b30b97f0b5c5d3d13c1aa7d3f9bde2b21fe72973c6492013bade97381a nodeimage-x86_64
+
+wwctl image import docker://ghcr.io/warewulf/warewulf-rockylinux@sha256:c39cf1e393d1a2e42ede466ae9a18cc5d123ac33c79b90ae420bd406de0a4505 nodeimage-aarch64
+
+apt install --yes qemu-user-static
+wwctl profile set nodes --image nodeimage-aarch64
+wwctl image shell nodeimage-aarch64
+sed -i -e 's/wwclient/wwclient.aarch64/g' /etc/warewulf/nodes.conf
+wwctl configure --all
+```
+
+## SELinux
+```bash
+semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
+restorecon -R -v /var/lib/tftpboot
+```
+
+## Routing
+```bash
+iptables -t nat -A POSTROUTING -o enp0s1 -s 10.5.0.0/16 -j MASQUERADE
+echo 1 > /proc/sys/net/ipv4/ip_forward
+wwctl profile set --yes nodes --netname=default --gateway=10.5.0.8
+```
+
+
 ### Notes
  * Consider moving tftpboot to `/srv/tftpboot` from `/var/lib/tftpboot`
    * Create `/srv/tftpboot` in `warewulf.spec`? (currently make symlink) 
