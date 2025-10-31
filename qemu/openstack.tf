@@ -9,6 +9,9 @@ resource "local_file" "ansible" {
 
     [ohpc:vars]
     sshkey=${var.ssh_public_key}
+    internal_network=10.5.0.0
+    internal_netmask=255.255.0.0
+    internal_gateway=10.5.0.8
     EOF
 }
 

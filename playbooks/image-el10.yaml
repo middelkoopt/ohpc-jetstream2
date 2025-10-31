@@ -38,7 +38,7 @@
         dnf install -y dnf-plugins-core
         dnf config-manager --set-enabled crb
         dnf install -y epel-release
-        dnf install -y --allowerasing python3 ca-certificates procps wget curl unzip jq passwd
+        dnf install -y --allowerasing python3 ca-certificates procps wget curl unzip jq yq passwd bind-utils busybox
 
         ## Update Image
         dnf upgrade -y

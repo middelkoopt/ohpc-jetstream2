@@ -124,18 +124,41 @@
     - name: Setup the head node
       # noqa: command-instead-of-module
       # noqa: risky-shell-pipe # false positive, no pipes used
+      environment:
+        internal_network: "{{ internal_network | default(omit) }}"
+        internal_netmask: "{{ internal_netmask | default(omit) }}"
+        ipv4_gateway: "{{ internal_gateway | default(omit) }}"
       ansible.builtin.shell: |-
         set -e -x
 
         ## Config
         sms_name=$(hostname)
         sms_ip=10.5.0.8
-        internal_network=10.5.0.0
-        internal_netmask=255.255.0.0
-        ipv4_gateway=10.5.0.1
+        : ${internal_network:=10.5.0.0}
+        : ${internal_netmask:=255.255.0.0}
+        : ${ipv4_gateway:=10.5.0.1}
         dns_servers=8.8.8.8
         dhcp_start=10.5.1.1
         dhcp_end=10.5.1.254
+
+        : ${sms_eth_internal:=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')}
+        : ${sms_eth_external:=$(ip -j route show default | jq -r '.[0].dev')}
+
+        ## Setup NAT Gateway
+        echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/80-ip_forward.conf
+        sysctl -q --system
+
+        dnf install -y nftables
+        cat > /etc/nftables.conf <<EOF
+        flush ruleset
+        table ip nat {
+            chain postrouting {
+                type nat hook postrouting priority 100; policy accept;
+                oifname "${sms_eth_external}" masquerade
+            }
+        }
+        EOF
+        systemctl enable --now nftables
 
         ## Configure warewulf.conf
         yq -i /etc/warewulf/warewulf.conf --from-file /dev/stdin <<EOF
@@ -156,7 +179,6 @@
         wwctl profile add nodes --profile=default --comment="Nodes profile"
 
         ## Configure dnsmasq
-        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')
         echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
 
         ## Start Warewulf
