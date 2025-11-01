@@ -12,6 +12,7 @@ resource "local_file" "ansible" {
     internal_network=10.5.0.0
     internal_netmask=255.255.0.0
     internal_gateway=10.5.0.8
+    dns_servers=10.5.0.8
     EOF
 }
 

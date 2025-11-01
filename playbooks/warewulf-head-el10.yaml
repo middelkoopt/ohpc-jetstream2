@@ -128,18 +128,19 @@
         internal_network: "{{ internal_network | default(omit) }}"
         internal_netmask: "{{ internal_netmask | default(omit) }}"
         ipv4_gateway: "{{ internal_gateway | default(omit) }}"
+        dns_servers: "{{ dns_servers | default(omit) }}"
       ansible.builtin.shell: |-
         set -e -x
 
         ## Config
         sms_name=$(hostname)
-        sms_ip=10.5.0.8
+        : ${sms_ip:=10.5.0.8}
         : ${internal_network:=10.5.0.0}
         : ${internal_netmask:=255.255.0.0}
         : ${ipv4_gateway:=10.5.0.1}
-        dns_servers=8.8.8.8
-        dhcp_start=10.5.1.1
-        dhcp_end=10.5.1.254
+        : ${dns_servers:=8.8.8.8}
+        : ${dhcp_start:=10.5.1.1}
+        : ${dhcp_end=10.5.1.254}
 
         : ${sms_eth_internal:=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')}
         : ${sms_eth_external:=$(ip -j route show default | jq -r '.[0].dev')}
@@ -149,7 +150,7 @@
         sysctl -q --system
 
         dnf install -y nftables
-        cat > /etc/nftables.conf <<EOF
+        cat > /etc/sysconfig/nftables.conf <<EOF
         flush ruleset
         table ip nat {
             chain postrouting {

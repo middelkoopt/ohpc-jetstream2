@@ -479,14 +479,6 @@ semanage fcontext -a -t public_content_t "/var/lib/tftpboot(/.*)?"
 restorecon -R -v /var/lib/tftpboot
 ```
 
-## Routing
-```bash
-iptables -t nat -A POSTROUTING -o enp0s1 -s 10.5.0.0/16 -j MASQUERADE
-echo 1 > /proc/sys/net/ipv4/ip_forward
-wwctl profile set --yes nodes --netname=default --gateway=10.5.0.8
-```
-
-
 ### Notes
  * Consider moving tftpboot to `/srv/tftpboot` from `/var/lib/tftpboot`
    * Create `/srv/tftpboot` in `warewulf.spec`? (currently make symlink) 
