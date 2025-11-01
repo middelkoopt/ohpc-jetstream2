@@ -60,11 +60,13 @@
         dnf install -y Lmod
 
         ## Cleanup
-        rm -vf /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
         dnf clean all
 
         # --------------------------------------------------------------------
         EXEC
+
+        ## Remove image
+        rm -vf /var/lib/warewulf/chroots/nodeimage/rootfs/boot/initramfs-*.img
 
     - name: Configure Dracut
       when:
