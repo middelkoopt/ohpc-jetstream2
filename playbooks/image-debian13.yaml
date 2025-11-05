@@ -47,7 +47,7 @@
         apt-get install --yes --no-install-recommends init udev dbus polkitd
         apt-get install --yes --no-install-recommends systemd-timesyncd systemd-resolved ifupdown
         apt-get install --yes --no-install-recommends openssh-server python3
-        apt-get install --yes less vim
+        apt-get install --yes less vim iputils-ping bind9-host
 
         ## Install kernel
         apt-get install --yes --no-install-recommends linux-image-generic

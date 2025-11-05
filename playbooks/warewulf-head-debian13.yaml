@@ -86,21 +86,45 @@
     - name: Setup the head node
       # noqa: command-instead-of-module
       # noqa: risky-shell-pipe # false positive, no pipes used
+      environment:
+        internal_network: "{{ internal_network | default(omit) }}"
+        internal_netmask: "{{ internal_netmask | default(omit) }}"
+        ipv4_gateway: "{{ internal_gateway | default(omit) }}"
+        dns_servers: "{{ dns_servers | default(omit) }}"
       ansible.builtin.shell: |-
         set -e -x
 
         ## Config
         sms_name=$(hostname)
-        sms_ip=10.5.0.8
-        internal_network=10.5.0.0
-        internal_netmask=255.255.0.0
-        ipv4_gateway=10.5.0.1
-        dns_servers=8.8.8.8
-        dhcp_start=10.5.1.1
-        dhcp_end=10.5.1.254
+        : ${sms_ip:=10.5.0.8}
+        : ${internal_network:=10.5.0.0}
+        : ${internal_netmask:=255.255.0.0}
+        : ${ipv4_gateway:=10.5.0.1}
+        : ${dns_servers:=8.8.8.8}
+        : ${dhcp_start:=10.5.1.1}
+        : ${dhcp_end=10.5.1.254}
+
+        : ${sms_eth_internal:=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')}
+        : ${sms_eth_external:=$(ip -j route show default | jq -r '.[0].dev')}
 
         ## Export variables for yq env
         export sms_ip internal_netmask internal_network dhcp_start dhcp_end
+
+        ## Setup NAT Gateway
+        echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/80-ip_forward.conf
+        sysctl -q --system
+
+        apt-get install --yes nftables
+        cat > /etc/nftables.conf <<EOF
+        flush ruleset
+        table ip nat {
+            chain postrouting {
+                type nat hook postrouting priority 100; policy accept;
+                oifname "${sms_eth_external}" masquerade
+            }
+        }
+        EOF
+        systemctl enable --now nftables
 
         ## Configure warewulf.conf
         yq -iY '.ipaddr = env.sms_ip' /etc/warewulf/warewulf.conf
@@ -125,10 +149,11 @@
         wwctl profile delete --yes nodes || /bin/true
         wwctl profile add nodes --profile=default --comment="Nodes profile"
 
-        ## Configure dnsmasq
-        sms_eth_internal=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')
-        echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
-        echo "port=0" > /etc/dnsmasq.d/ww4-disable-dns.conf
+        ## Configure dnsmasq (Debian/Ubuntu wraps dnsmasq and inserts config values)
+        sed -i -E 's/^#?DNSMASQ_EXCEPT=.*/DNSMASQ_EXCEPT=lo/' /etc/default/dnsmasq        # disable reconfiguring host via resolvectl
+        sed -i -E 's/^#?IGNORE_RESOLVCONF=.*/IGNORE_RESOLVCONF=yes/' /etc/default/dnsmasq # disable inserting --local-service
+        echo "bind-interfaces" > /etc/dnsmasq.d/ww4-interface.conf # prevent binding to 0.0.0.0
+        echo "listen-address=${sms_ip}" >> /etc/dnsmasq.d/ww4-interface.conf
 
         ## Start Warewulf
         systemctl enable --now warewulfd
@@ -165,9 +190,6 @@
 
         grep 'SlurmctldParameters=' /etc/slurm/slurm.conf || echo 'SlurmctldParameters=enable_configless' >> /etc/slurm/slurm.conf
         grep 'SlurmctldParameters=' /etc/slurm/slurm.conf
-
-        ## Configure warewulf nodes profile for network
-        wwctl profile set --yes nodes --netname=default --netmask=${internal_netmask} --gateway=${ipv4_gateway} --nettagadd=DNS=${dns_servers}
 
         ## Add new overlays to nodes profile
         wwctl profile set --yes nodes --system-overlays=munge,sfdisk,mkfs
