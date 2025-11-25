@@ -353,15 +353,12 @@ Debug Notes
 
 Provision
 ```bash
-systemctl disable --now dhcpd.service
-dnf install -y dnsmasq yq
-echo "interface=eth1" > /etc/dnsmasq.d/ww4-interface.conf
-
 yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
-yq -i '.dhcp["systemd name"] = "dnsmasq" | .tftp["systemd name"] = "dnsmasq"' /etc/warewulf/warewulf.conf
+yq -i '.prefixlen6 = 64' /etc/warewulf/warewulf.conf
+yq -i '.dhcp.["range6 start"] = "fd00:5::1:01" ' /etc/warewulf/warewulf.conf
+yq -i '.dhcp.["range6 end"] = "fd00:5::1:FF" ' /etc/warewulf/warewulf.conf
 
-wwctl node set -y c1 --ipaddr6=fd00:5::1:1
-wwctl node delete -y 'c[2-4]'
+wwctl node set -y c1 --ipaddr6=fd00:5::1:1 --prefixlen6=64
 
 wwctl configure --all
 wwctl overlay build
