@@ -145,14 +145,21 @@
         : ${sms_eth_internal:=$(ip -j addr show to ${internal_network}/${internal_netmask} | jq -r '.[].ifname')}
         : ${sms_eth_external:=$(ip -j route show default | jq -r '.[0].dev')}
 
-        ## Setup NAT Gateway
-        echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/80-ip_forward.conf
+        ## Setup  NAT
+        echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/80-ip_forward.conf
+        echo "net.ipv6.conf.${sms_eth_internal}.forwarding = 1" > /etc/sysctl.d/80-ip6_forward.conf
         sysctl -q --system
 
         dnf install -y nftables
         cat > /etc/sysconfig/nftables.conf <<EOF
         flush ruleset
         table ip nat {
+            chain postrouting {
+                type nat hook postrouting priority 100; policy accept;
+                oifname "${sms_eth_external}" masquerade
+            }
+        }
+        table ip6 nat {
             chain postrouting {
                 type nat hook postrouting priority 100; policy accept;
                 oifname "${sms_eth_external}" masquerade
@@ -165,7 +172,6 @@
         yq -i /etc/warewulf/warewulf.conf --from-file /dev/stdin <<EOF
           .ipaddr = "${sms_ip}" |
           .netmask = "${internal_netmask}" |
-          .network = "${internal_network}" |
           .dhcp["range start"] = "${dhcp_start}" |
           .dhcp["range end"] = "${dhcp_end}"
         EOF
@@ -180,7 +186,8 @@
         wwctl profile add nodes --profile=default --comment="Nodes profile"
 
         ## Configure dnsmasq
-        echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
+        # FIXME: fixed in tm-ipv6 branch
+        #echo "interface=${sms_eth_internal}" > /etc/dnsmasq.d/ww4-interface.conf
 
         ## Start Warewulf
         systemctl enable --now warewulfd

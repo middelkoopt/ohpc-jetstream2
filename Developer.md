@@ -353,9 +353,9 @@ Debug Notes
 
 Provision
 ```bash
+# Configure IPv6 addresses
 yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
-yq -i '.prefixlen6 = 64' /etc/warewulf/warewulf.conf
-yq -i '.dhcp.["range6 start"] = "fd00:5::1:01" ' /etc/warewulf/warewulf.conf
+yq -i '.dhcp.["range6 start"] = "fd00:5::1:1" ' /etc/warewulf/warewulf.conf
 yq -i '.dhcp.["range6 end"] = "fd00:5::1:FF" ' /etc/warewulf/warewulf.conf
 
 wwctl node set -y c1 --ipaddr6=fd00:5::1:1 --prefixlen6=64
@@ -363,7 +363,7 @@ wwctl node set -y c1 --ipaddr6=fd00:5::1:1 --prefixlen6=64
 wwctl configure --all
 wwctl overlay build
 
-# Build new iPXE with 
+# Build new iPXE with
 cd /usr/src
 git clone https://github.com/ipxe/ipxe.git
 cd ipxe/src
@@ -401,6 +401,15 @@ Notes:
  * You can use IPv6 addresses in ipaddr and will (mostly?) work (single IPv6 stack)
  * Template Ipadd6 uses CIDR notation; warewulf.conf ipaddr6 must use CIDR notation. 
  * Going to make Ipaddr6 just the IP
+
+## OpenHPC Jinja2/Markdown Docs
+
+Install deps
+```bash
+sudo dnf install -y yq make python3-jinja2 python3-pip pandoc golang
+sudo python3 -m pip install jinja2-cli[yaml]
+sudo go install sigs.k8s.io/mdtoc@latest
+```
 
 ## OpenHPC 4.0
 
