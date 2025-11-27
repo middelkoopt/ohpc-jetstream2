@@ -377,7 +377,7 @@ dhcp-option-force=tag:aarch64,option6:bootfile-url,"tftp://[fd00:5::8]/warewulf/
 dhcp-userclass=set:iPXE,iPXE
 dhcp-option-force=tag:iPXE,option6:bootfile-url,"http://[fd00:5::8]:9873/ipxe/${mac:hexhyp}?assetkey=${asset}&uuid=${uuid}"
 
-dhcp-range=fd00:5::1:1,fd00:5::1:F0,6h
+dhcp-range=fd00:5::2:1,fd00:5::2:FE,6h
 EOF
 
 # reconfigure
