@@ -147,7 +147,7 @@
 
         ## Setup  NAT
         echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/80-ip_forward.conf
-        echo "net.ipv6.conf.${sms_eth_internal}.forwarding = 1" > /etc/sysctl.d/80-ip6_forward.conf
+        echo "net.ipv6.conf.all.forwarding = 1" > /etc/sysctl.d/80-ip6_forward.conf
         sysctl -q --system
 
         dnf install -y nftables

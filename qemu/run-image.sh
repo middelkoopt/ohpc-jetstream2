@@ -118,9 +118,10 @@ if [[ $IMAGE_NAME = "head" ]] ; then
         -bios $QEMU_EFI \
         -drive if=virtio,file=${IMAGE_NAME}.qcow2,format=qcow2 \
         -drive if=virtio,file=seed.img,format=raw,media=cdrom \
-        -nic user,model=virtio-net-pci,mac=52:54:00:00:02:0f,hostfwd=tcp::8022-:22 \
+        -nic user,model=virtio-net-pci,mac=52:54:00:00:02:0f,hostfwd=tcp::8022-:22,ipv6-net=fd00:2::/64 \
         -device virtio-net-pci,netdev=net1,mac=52:54:00:05:00:08 \
         -netdev ${QEMU_NET},id=net1 \
+        -serial mon:stdio -echr 0x05 \
         -nographic
 else
     ## Create a new backing disk (overwrites existing disk)
@@ -140,5 +141,6 @@ else
         -fw_cfg name=opt/org.tianocore/IPv4PXESupport,string=y \
         -fw_cfg name=opt/org.tianocore/IPv6PXESupport,string=y \
         -qmp unix:/$PWD/${IMAGE_NAME}.sock,server,nowait \
+        -serial mon:stdio -echr 0x05 \
         -nographic
 fi
