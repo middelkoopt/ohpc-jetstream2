@@ -358,35 +358,14 @@ yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
 yq -i '.dhcp.["range6 start"] = "fd00:5::1:1" ' /etc/warewulf/warewulf.conf
 yq -i '.dhcp.["range6 end"] = "fd00:5::1:FF" ' /etc/warewulf/warewulf.conf
 
-wwctl node set -y c1 --ipaddr6=fd00:5::1:1 --prefixlen6=64
+wwctl profile set -y nodes --prefixlen6=64 --gateway6=fd00:5::8
+wwctl profile set -y nodes --nettagadd="DNS=fd00:5::8"
+for I in {1..4} ; do
+  wwctl node set -y c${I} --ipaddr6=fd00:5::1:${I}
+done
 
 wwctl configure --all
 wwctl overlay build
-
-# Build new iPXE with
-cd /usr/src
-git clone https://github.com/ipxe/ipxe.git
-cd ipxe/src
-make bin-arm64-efi/ipxe.efi
-cp -v bin-arm64-efi/ipxe.efi /var/lib/tftpboot/warewulf
-
-## Fix dnsmasq
-sudo tee -a /etc/dnsmasq.d/ww4-hosts.conf <<\EOF
-enable-ra
-
-dhcp-match=set:aarch64,option6:client-arch,11 # EFI aarch64
-dhcp-option-force=tag:aarch64,option6:bootfile-url,"tftp://[fd00:5::8]/warewulf/ipxe.efi"
-
-dhcp-userclass=set:iPXE,iPXE
-dhcp-option-force=tag:iPXE,option6:bootfile-url,"http://[fd00:5::8]:9873/ipxe/${mac:hexhyp}?assetkey=${asset}&uuid=${uuid}"
-
-dhcp-range=fd00:5::1:1,fd00:5::1:F0,6h
-EOF
-
-# reconfigure
-systemctl restart warewulfd.service
-systemctl restart dnsmasq.service
-
 ```
 
 Node
