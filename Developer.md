@@ -364,6 +364,15 @@ for I in {1..4} ; do
   wwctl node set -y c${I} --ipaddr6=fd00:5::1:${I}
 done
 
+# Remove IPv4
+yq -i 'del(.dhcp["range start"])' /etc/warewulf/warewulf.conf
+yq -i 'del(.dhcp["range end"])' /etc/warewulf/warewulf.conf
+
+yq -i 'del(.nodes[].["network devices"].default.ipaddr)' /etc/warewulf/nodes.conf
+yq -i 'del(.nodeprofiles.nodes["network devices"].default.netmask)' /etc/warewulf/nodes.conf
+yq -i 'del(.nodeprofiles.nodes["network devices"].default.network)' /etc/warewulf/nodes.conf
+yq -i 'del(.nodeprofiles.nodes["network devices"].default.gateway)' /etc/warewulf/nodes.conf
+
 wwctl configure --all
 wwctl overlay build
 ```
