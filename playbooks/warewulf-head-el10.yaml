@@ -114,6 +114,7 @@
           make build
           make install
           wwctl completion bash > /etc/bash_completion.d/wwctl
+          install -v etc/warewulf.conf-el10 /etc/warewulf/warewulf.conf
         {% endif %}
 
       args:
