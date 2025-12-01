@@ -357,8 +357,8 @@ Provision
 yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
 
 # Configure stateful DHCP (required for iPXE boot)
-yq -i '.dhcp.["range6 start"] = "fd00:5::2:1" ' /etc/warewulf/warewulf.conf
-yq -i '.dhcp.["range6 end"] = "fd00:5::2:FF" ' /etc/warewulf/warewulf.conf
+yq -i '.dhcp.["range6 start"] = "fd00:5::2:01"' /etc/warewulf/warewulf.conf
+yq -i '.dhcp.["range6 end"]   = "fd00:5::2:FF"' /etc/warewulf/warewulf.conf
 
 wwctl profile set -y nodes --prefixlen6=64 --gateway6=fd00:5::8
 wwctl profile set -y nodes --nettagadd="DNS=fd00:5::8"
