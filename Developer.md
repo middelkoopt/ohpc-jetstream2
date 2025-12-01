@@ -353,10 +353,12 @@ Debug Notes
 
 Provision
 ```bash
-# Configure IPv6 addresses
+# Configure IPv6 IP
 yq -i '.ipaddr6 = "fd00:5::8/64"' /etc/warewulf/warewulf.conf
-yq -i '.dhcp.["range6 start"] = "fd00:5::1:1" ' /etc/warewulf/warewulf.conf
-yq -i '.dhcp.["range6 end"] = "fd00:5::1:FF" ' /etc/warewulf/warewulf.conf
+
+# Configure stateful DHCP (required for iPXE boot)
+yq -i '.dhcp.["range6 start"] = "fd00:5::2:1" ' /etc/warewulf/warewulf.conf
+yq -i '.dhcp.["range6 end"] = "fd00:5::2:FF" ' /etc/warewulf/warewulf.conf
 
 wwctl profile set -y nodes --prefixlen6=64 --gateway6=fd00:5::8
 wwctl profile set -y nodes --nettagadd="DNS=fd00:5::8"
@@ -364,10 +366,11 @@ for I in {1..4} ; do
   wwctl node set -y c${I} --ipaddr6=fd00:5::1:${I}
 done
 
-# Remove IPv4
+# Remove IPv4 dhcp (required for two-stage)
 yq -i 'del(.dhcp["range start"])' /etc/warewulf/warewulf.conf
 yq -i 'del(.dhcp["range end"])' /etc/warewulf/warewulf.conf
 
+# IPv6 only (optional)
 yq -i 'del(.nodes[].["network devices"].default.ipaddr)' /etc/warewulf/nodes.conf
 yq -i 'del(.nodeprofiles.nodes["network devices"].default.netmask)' /etc/warewulf/nodes.conf
 yq -i 'del(.nodeprofiles.nodes["network devices"].default.network)' /etc/warewulf/nodes.conf
