@@ -10,6 +10,5 @@ local*.ini
 /.venv/
 /.ipynb_checkpoints/
 boot.log
-Untitiled*
 *.qcow2
 recipe.sh
